@@ -6,6 +6,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
@@ -13,6 +14,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -41,7 +44,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun mainComposable(){
     //isFirstLandingはAppStorageかなんかから持ってくる(暫定で値を設定している)
-    var isFirstLanding by remember { mutableStateOf(true) }
+    var isFirstLanding by remember { mutableStateOf(false) }
     if (isFirstLanding) {
         firstLandingComposable(
             newUserClick = {
@@ -128,8 +131,50 @@ fun homeComposable() {
     Column(
         modifier = Modifier.fillMaxSize(),
     ){
-        Text("HOME")
+        val userId = "undefined"
+        var showId by remember { mutableStateOf(false) }
+
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            if (!showId){
+                ClickableText(
+                    text = AnnotatedString("引き継ぎコード: ここをタップして表示"),
+                    style = TextStyle( fontSize = 12.sp ),
+                    modifier = Modifier.size(width = 275.dp, height = 15.dp),
+                    onClick = { showId = true }
+                )
+            }
+            else {
+                Text(
+                    text = "引き継ぎコード: $userId",
+                    fontSize = 12.sp,
+                    modifier = Modifier.size(width = 275.dp, height = 15.dp)
+                )
+            }
+            Spacer(modifier = Modifier.padding(10.dp))
+
+            /*
+            TODO: dataViewerComposable()
+            */
+
+            Spacer(modifier = Modifier.padding(100.dp))
+
+            Button(
+                onClick = {},
+                modifier = Modifier.size(width = 275.dp, height = 50.dp)
+            ) {
+                Text(text = "送迎を開始", fontSize = 16.sp)
+            }
+        }
     }
+}
+
+@Composable
+fun dataViewerComposable() {
+
 }
 
 @Preview(showBackground = true)
