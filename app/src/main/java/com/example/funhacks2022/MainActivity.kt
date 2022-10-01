@@ -1,18 +1,19 @@
 package com.example.funhacks2022
 
-import android.content.Context
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
@@ -142,31 +143,26 @@ fun homeComposable() {
             if (!showId){
                 ClickableText(
                     text = AnnotatedString("引き継ぎコード: ここをタップして表示"),
-                    style = TextStyle( fontSize = 12.sp ),
-                    modifier = Modifier.size(width = 275.dp, height = 15.dp),
+                    style = TextStyle( fontSize = 14.sp ),
+                    modifier = Modifier.size(width = 300.dp, height = 18.dp),
                     onClick = { showId = true }
                 )
             }
             else {
                 Text(
                     text = "引き継ぎコード: $userId",
-                    fontSize = 12.sp,
-                    modifier = Modifier.size(width = 275.dp, height = 15.dp)
+                    fontSize = 14.sp,
+                    modifier = Modifier.size(width = 300.dp, height = 18.dp)
                 )
             }
-            Spacer(modifier = Modifier.padding(10.dp))
-
-            /*
-            TODO: dataViewerComposable()
-            */
-
-            Spacer(modifier = Modifier.padding(100.dp))
-
+            Spacer(modifier = Modifier.padding(5.dp))
+            dataViewerComposable()
+            Spacer(modifier = Modifier.padding(25.dp))
             Button(
                 onClick = {},
-                modifier = Modifier.size(width = 275.dp, height = 50.dp)
+                modifier = Modifier.size(width = 300.dp, height = 75.dp)
             ) {
-                Text(text = "送迎を開始", fontSize = 16.sp)
+                Text(text = "送迎を開始", fontSize = 28.sp)
             }
         }
     }
@@ -174,8 +170,17 @@ fun homeComposable() {
 
 @Composable
 fun dataViewerComposable() {
-
+    Column(
+        modifier = Modifier
+            .border(2.dp, Color.Black)
+            .size(width = 300.dp, height = 500.dp)
+    ) {
+        Text(text = "あああああ", fontSize = 50.sp)
+        Spacer(modifier = Modifier.padding(75.dp))
+        Text(text = "あああああ", fontSize = 50.sp)
+    }
 }
+
 
 @Preview(showBackground = true)
 @Composable
