@@ -45,7 +45,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun mainComposable(){
     //isFirstLandingはAppStorageかなんかから持ってくる(暫定で値を設定している)
-    var isFirstLanding by remember { mutableStateOf(false) }
+    var isFirstLanding by remember { mutableStateOf(true) }
     if (isFirstLanding) {
         firstLandingComposable(
             newUserClick = {
@@ -99,6 +99,7 @@ fun firstLandingComposable(
             value = loginId,
             onValueChange = { loginId = it },
             placeholder = { Text("引き継ぎコードを入力") },
+            singleLine = true,
             modifier = Modifier.size(width = 275.dp, height = 50.dp)
         )
         Spacer(modifier = Modifier.padding(5.dp))
