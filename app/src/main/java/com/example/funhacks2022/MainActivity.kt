@@ -1,9 +1,17 @@
 package com.example.funhacks2022
 
+import android.Manifest
+import android.app.Activity
+import android.content.Context
+import android.content.Context.LOCATION_SERVICE
+import android.content.pm.PackageManager
+import android.location.Location
+import android.location.LocationManager
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts.RequestPermission
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,7 +29,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.DialogProperties
+import androidx.core.app.ActivityCompat
+import androidx.core.app.ActivityCompat.getSystemService
+import androidx.core.app.ActivityCompat.requestPermissions
+import androidx.core.content.ContextCompat
 import com.example.funhacks2022.ui.theme.FunHacks2022Theme
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.tasks.CancellationTokenSource
+import com.google.android.gms.tasks.Task
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -118,7 +135,7 @@ fun firstLandingComposable(
             },
             modifier = Modifier.size(width = 275.dp, height = 50.dp)
         ) {
-                Text("データを引き継ぎ", fontSize = 16.sp)
+            Text("データを引き継ぎ", fontSize = 16.sp)
         }
     }
 }
@@ -130,12 +147,32 @@ fun loginValidator(loginId: String): Boolean{
 
 @Composable
 fun homeComposable() {
+    val userId = "undefined"
+    var showId by remember { mutableStateOf(false) }
+    val thisContext = LocalContext.current
+    var dialogOpen by remember { mutableStateOf(false) }
+
+
+    //How I can move "Getting Geo Location" codes to independent class?
+    val REQUEST_CODE = 1234
+    if (ContextCompat.checkSelfPermission(thisContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
+        println("ACCESS GRANTED")
+    }
+    else {
+        requestPermissions(
+            thisContext as Activity,
+            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+            REQUEST_CODE
+        )
+    }
+
+    val fusedLocationManager = FusedLocationProviderClient(thisContext)
+    var cancellationSource = CancellationTokenSource()
+    var currentLocation = fusedLocationManager.lastLocation
+
     Column(
         modifier = Modifier.fillMaxSize(),
     ){
-        val userId = "undefined"
-        var showId by remember { mutableStateOf(false) }
-
         Column(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.Center,
@@ -160,10 +197,49 @@ fun homeComposable() {
             dataViewerComposable()
             Spacer(modifier = Modifier.padding(25.dp))
             Button(
-                onClick = {},
+                onClick = {
+                    currentLocation = fusedLocationManager.getCurrentLocation(LocationRequest.PRIORITY_HIGH_ACCURACY, cancellationSource.token)
+                    dialogOpen = true
+                },
                 modifier = Modifier.size(width = 300.dp, height = 75.dp)
             ) {
                 Text(text = "送迎を開始", fontSize = 28.sp)
+            }
+
+            if (dialogOpen) {
+                AlertDialog(
+                    onDismissRequest = {
+                        // Dismiss the dialog when the user clicks outside the dialog or on the back
+                        // button. If you want to disable that functionality,
+                        // simply leave this block empty.
+                       dialogOpen = false
+                    },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            // perform the confirm action
+                            dialogOpen = false
+                        }) {
+                            Text(text = "OK")
+                        }
+                    },
+                    title = {
+                        Text(text = "Current Location")
+                    },
+                    text = {
+                        val lat = currentLocation.result.latitude
+                        val lot = currentLocation.result.longitude
+                        Text(text = "latitude: $lat\nlongitude: $lot")
+                    },
+                    modifier = Modifier // Set the width and padding
+                        .fillMaxWidth()
+                        .padding(32.dp),
+                    shape = RoundedCornerShape(5.dp),
+                    backgroundColor = Color.White,
+                    properties = DialogProperties(
+                        dismissOnBackPress = true,
+                        dismissOnClickOutside = true
+                    )
+                )
             }
         }
     }
