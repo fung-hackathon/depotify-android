@@ -2,6 +2,7 @@ package com.example.funhacks2022
 
 import android.Manifest
 import android.app.Activity
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.Toast
@@ -26,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.app.ActivityCompat.requestPermissions
 import androidx.core.content.ContextCompat
+import androidx.navigation.compose.rememberNavController
 import com.example.funhacks2022.ui.theme.FunHacks2022Theme
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationRequest
@@ -61,7 +63,6 @@ fun mainComposable(){
                 isFirstLanding = false
             },
             loginClick = {
-                /*TODO*/
                 isFirstLanding = false
             }
         )
@@ -114,7 +115,7 @@ fun firstLandingComposable(
         Button(
             onClick = {
                 if (loginValidator(loginId)) {
-                    loginClick
+                    loginClick()
                 }
                 else {
                     Toast.makeText(
@@ -140,6 +141,8 @@ fun loginValidator(loginId: String): Boolean{
 fun homeComposable() {
     val thisContext = LocalContext.current
     var dialogOpen by remember { mutableStateOf(false) }
+
+    val navigationControler = rememberNavController()
 
     //How I can move "Getting Geo Location" codes to independent class?
     val REQUEST_CODE = 1234
@@ -175,9 +178,11 @@ fun homeComposable() {
                 onClick = {
 //                    currentLocation = fusedLocationManager.getCurrentLocation(LocationRequest.PRIORITY_HIGH_ACCURACY, cancellationSource.token)
 //                    dialogOpen = true
-                      DrivingActivity()
+                    thisContext.startActivity(Intent(thisContext, DrivingActivity::class.java))
+                    (thisContext as Activity).finish()
                 },
-                modifier = Modifier.size(width = 300.dp, height = 75.dp)
+                modifier = Modifier.size(width = 300.dp, height = 75.dp),
+                shape = RoundedCornerShape(50.dp)
             ) {
                 Text(text = "送迎を開始", fontSize = 28.sp)
             }
