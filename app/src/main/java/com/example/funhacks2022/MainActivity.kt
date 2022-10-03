@@ -138,11 +138,8 @@ fun loginValidator(loginId: String): Boolean{
 
 @Composable
 fun homeComposable() {
-    val userId = "undefined"
-    var showId by remember { mutableStateOf(false) }
     val thisContext = LocalContext.current
     var dialogOpen by remember { mutableStateOf(false) }
-
 
     //How I can move "Getting Geo Location" codes to independent class?
     val REQUEST_CODE = 1234
@@ -169,28 +166,16 @@ fun homeComposable() {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            if (!showId){
-                ClickableText(
-                    text = AnnotatedString("引き継ぎコード: ここをタップして表示"),
-                    style = TextStyle( fontSize = 14.sp ),
-                    modifier = Modifier.size(width = 300.dp, height = 18.dp),
-                    onClick = { showId = true }
-                )
-            }
-            else {
-                Text(
-                    text = "引き継ぎコード: $userId",
-                    fontSize = 14.sp,
-                    modifier = Modifier.size(width = 300.dp, height = 18.dp)
-                )
-            }
+            userIdComposable()
+
             Spacer(modifier = Modifier.padding(5.dp))
             dataViewerComposable()
             Spacer(modifier = Modifier.padding(25.dp))
             Button(
                 onClick = {
-                    currentLocation = fusedLocationManager.getCurrentLocation(LocationRequest.PRIORITY_HIGH_ACCURACY, cancellationSource.token)
-                    dialogOpen = true
+//                    currentLocation = fusedLocationManager.getCurrentLocation(LocationRequest.PRIORITY_HIGH_ACCURACY, cancellationSource.token)
+//                    dialogOpen = true
+                      DrivingActivity()
                 },
                 modifier = Modifier.size(width = 300.dp, height = 75.dp)
             ) {
@@ -237,6 +222,28 @@ fun homeComposable() {
 }
 
 @Composable
+fun userIdComposable() {
+    val userId = "undefined"
+    var showId by remember { mutableStateOf(false) }
+
+    if (!showId){
+        ClickableText(
+            text = AnnotatedString("引き継ぎコード: ここをタップして表示"),
+            style = TextStyle( fontSize = 14.sp ),
+            modifier = Modifier.size(width = 300.dp, height = 18.dp),
+            onClick = { showId = true }
+        )
+    }
+    else {
+        Text(
+            text = "引き継ぎコード: $userId",
+            fontSize = 14.sp,
+            modifier = Modifier.size(width = 300.dp, height = 18.dp)
+        )
+    }
+}
+
+@Composable
 fun dataViewerComposable() {
     Column(
         modifier = Modifier
@@ -250,10 +257,11 @@ fun dataViewerComposable() {
 }
 
 
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    FunHacks2022Theme {
-        mainComposable()
-    }
-}
+//Uncomment below to show preview. If conflict, comment out other DefaultPreview on other file
+//@Preview(showBackground = true)
+//@Composable
+//fun DefaultPreview() {
+//    FunHacks2022Theme {
+//        mainComposable()
+//    }
+//}
