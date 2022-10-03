@@ -19,10 +19,22 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.FunHacks2022"
         tools:targetApi="31">
+        <activity
+            android:name=".HomeActivity"
+            android:exported="false"
+            android:label="@string/title_activity_home"
+            android:theme="@style/Theme.FunHacks2022"
+            android:windowSoftInputMode="adjustPan">
+            <meta-data
+                android:name="android.app.lib_name"
+                android:value="" />
+        </activity>
 
         <activity
             android:name=".DrivingActivity"
-            android:exported="false">
+            android:exported="false"
+            android:label="@string/title_activity_driving"
+            android:theme="@style/Theme.FunHacks2022">
             <meta-data
                 android:name="android.app.lib_name"
                 android:value="" />
