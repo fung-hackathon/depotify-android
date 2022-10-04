@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.window.Dialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.funhacks2022.ui.theme.FunHacks2022Theme
@@ -157,7 +159,7 @@ fun loginValidator(loginId: String): Boolean{
 @Composable
 fun homeComposable() {
     val thisContext = LocalContext.current
-    var dialogOpen by remember { mutableStateOf(false) }
+    var dialogState by remember { mutableStateOf(0) }
 
     //How I can move "Getting Geo Location" codes to independent class?
     val REQUEST_CODE = 1234
@@ -171,10 +173,6 @@ fun homeComposable() {
             REQUEST_CODE
         )
     }
-
-    val fusedLocationManager = FusedLocationProviderClient(thisContext)
-    var cancellationSource = CancellationTokenSource()
-    var currentLocation = fusedLocationManager.lastLocation
 
     val dStatePref = thisContext.getSharedPreferences(stringResource(R.string.DRIVING_STATE), Context.MODE_PRIVATE)
     val locationDataPref = thisContext.getSharedPreferences(stringResource(R.string.LOCATION_DATA), Context.MODE_PRIVATE)
@@ -194,8 +192,7 @@ fun homeComposable() {
             Spacer(modifier = Modifier.padding(25.dp))
             Button(
                 onClick = {
-                    currentLocation = fusedLocationManager.getCurrentLocation(LocationRequest.PRIORITY_HIGH_ACCURACY, cancellationSource.token)
-                    dialogOpen = true
+                    dialogState = 1
                 },
                 modifier = Modifier.size(width = 300.dp, height = 75.dp),
                 shape = RoundedCornerShape(50.dp)
@@ -203,55 +200,61 @@ fun homeComposable() {
                 Text(text = "送迎を開始", fontSize = 28.sp)
             }
 
-            if (dialogOpen) {
+            if (dialogState == 1) {
                 AlertDialog(
-                    onDismissRequest = {
-                        dialogOpen = false
-                    },
-                    dismissButton = {
-                        TextButton(onClick = { dialogOpen = false }) { Text("いいえ") }
-                    },
-                    confirmButton = {
-                        TextButton(onClick = {
-                            //Save start point
-                            val latStr = (currentLocation.result.latitude).toString()
-                            val lotStr = (currentLocation.result.longitude).toString()
-                            with(locationDataPref.edit()){
-                                putString("startLatitude", latStr)
-                                putString("startLongitude", lotStr)
+                    onDismissRequest = { dialogState = 0 },
+                    dismissButton = { TextButton(onClick = { dialogState = 0 }) { Text("いいえ") } },
+                    confirmButton = { TextButton(onClick = { dialogState = 2 }) { Text(text = "はい") } },
+                    title = { Text(text = "送迎を開始しますか?") },
+                    text = { Text(text = "同乗者を乗せてから開始してください。\n出発点と到着点が同じ場合は、記録が無効となることに注意してください。") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(32.dp),
+                    shape = RoundedCornerShape(5.dp),
+                    properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = true)
+                )
+            }
+            else if (dialogState == 2){
+                Dialog(
+                    onDismissRequest = { dialogState = 0 },
+                    properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().background(color = Color.White, shape = RoundedCornerShape(5.dp)).size(height = 100.dp, width = 200.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        CircularProgressIndicator()
+                        Spacer(modifier = Modifier.padding(15.dp))
+                        Text("GPS測位中です。\nしばらくお待ち下さい")
+                    }
+
+                    FusedLocationProviderClient(thisContext).getCurrentLocation(LocationRequest.PRIORITY_HIGH_ACCURACY, CancellationTokenSource().token)
+                        .addOnFailureListener { exception ->
+                            Toast.makeText(
+                                thisContext, "GPS測位に失敗しました。位置情報サービスなどを確かめた上で、再度お試しください", Toast.LENGTH_LONG
+                            ).show()
+                            dialogState = 0
+                        }
+                        .addOnSuccessListener { location ->
+                            with(locationDataPref.edit()) {
+                                putString("startLatitude", (location.latitude).toString())
+                                putString("startLongitude", (location.longitude).toString())
                                 apply()
                             }
 
-                            //Changing State
-                            dialogOpen = false
+                            dialogState = 0
+
                             with(dStatePref.edit()){
                                 putInt("drivingState", 1)
                                 apply()
                             }
 
-                            //If you don't call (Activity).finish() then user may back to old Activity by "BACK" button
+                            //Destroy this Activity
                             thisContext.startActivity(Intent(thisContext, DrivingActivity::class.java))
                             (thisContext as Activity).finish()
-                        }) {
-                            Text(text = "はい")
                         }
-                    },
-                    title = {
-                        Text(text = "送迎を開始しますか?")
-                    },
-                    text = {
-                        Text(text = "同乗者を乗せてから開始してください。\n出発点と到着点が同じ場合は、記録が無効となることに注意してください。")
-                    },
-                    modifier = Modifier // Set the width and padding
-                        .fillMaxWidth()
-                        .padding(32.dp),
-                    shape = RoundedCornerShape(5.dp),
-                    backgroundColor = Color.White,
-                    properties = DialogProperties(
-                        dismissOnBackPress = true,
-                        dismissOnClickOutside = true
-                    )
-                )
+                }
             }
         }
     }

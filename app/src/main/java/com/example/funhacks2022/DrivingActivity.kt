@@ -8,6 +8,7 @@ import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Canvas
@@ -72,29 +73,11 @@ fun drivingMainComposable() {
         )
     }
 
-    val fusedLocationManager = FusedLocationProviderClient(thisContext)
-    val canncellationSource = CancellationTokenSource()
-
     val dStatePref = thisContext.getSharedPreferences(stringResource(R.string.DRIVING_STATE), Context.MODE_PRIVATE)
     val locationDataPref = thisContext.getSharedPreferences(stringResource(R.string.LOCATION_DATA), Context.MODE_PRIVATE)
 
     if (!isFinished) {
-        drivingComposable(clickFinish = {
-            fusedLocationManager
-                .getCurrentLocation(LocationRequest.PRIORITY_HIGH_ACCURACY, canncellationSource.token)
-                .addOnSuccessListener { location ->
-                    val latStr = (location.latitude).toString()
-                    val lotStr = (location.longitude).toString()
-
-                    with(locationDataPref.edit()){
-                        putString("finishLatitude", latStr)
-                        putString("finishLongitude", lotStr)
-                        apply()
-                    }
-
-                    dialogState = 1
-                }
-        },
+        drivingComposable(clickFinish = { dialogState = 1 },
         clickCancel = { dialogState = 2 })
     }
     else {
@@ -103,6 +86,17 @@ fun drivingMainComposable() {
 
     when(dialogState) {
         1 -> { //Finish Driving
+            AlertDialog(
+                onDismissRequest = { dialogState = 0 },
+                dismissButton = { TextButton(onClick = { dialogState = 0 }) { Text(text = "いいえ") } },
+                confirmButton = { TextButton(onClick = { dialogState = 4 }) { Text(text = "はい") } },
+                title = { Text(text = "送迎を終了しますか?") },
+                modifier = Modifier.fillMaxWidth().padding(32.dp),
+                shape = RoundedCornerShape(5.dp),
+                properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = true)
+            )
+        }
+        2 -> { //Cancel Driving
             AlertDialog(
                 onDismissRequest = { dialogState = 0 },
                 dismissButton = { TextButton(onClick = { dialogState = 0 }) { Text(text = "いいえ") } },
@@ -116,64 +110,23 @@ fun drivingMainComposable() {
                             apply()
                         }
 
-                        //Move to drivingEndedComposable
-                        isFinished = true
+                        //Back to HomeActivity directly
+                        thisContext.startActivity(Intent(thisContext, HomeActivity::class.java))
+                        (thisContext as Activity).finish()
                     }) {
                         Text(text = "はい")
                     }
                 },
-                title = { Text(text = "送迎を終了しますか?") },
+                title = { Text(text = "送迎を中止(キャンセル)しますか?") },
                 modifier = Modifier.fillMaxWidth().padding(32.dp),
                 shape = RoundedCornerShape(5.dp),
                 properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = true)
             )
         }
-        2 -> { //Cancel Driving
-            AlertDialog(
-                onDismissRequest = {
-                    dialogState = 0
-                },
-                dismissButton = {
-                    TextButton(onClick = { dialogState = 0 }) { Text(text = "いいえ") }
-                },
-                confirmButton = {
-                    TextButton(onClick = {
-                        dialogState = 0
-
-                        //Update driving state
-                        with(dStatePref.edit()){
-                            putInt("drivingState", 0)
-                            apply()
-                        }
-
-                        //Back to HomeActivity directly
-                        thisContext.startActivity(Intent(thisContext, HomeActivity::class.java))
-                        (thisContext as Activity).finish()
-                    }) {
-                        Text(text = "はい")
-                    }
-                },
-                title = {
-                    Text(text = "送迎を中止(キャンセル)しますか?")
-                },
-                modifier = Modifier // Set the width and padding
-                    .fillMaxWidth()
-                    .padding(32.dp),
-                shape = RoundedCornerShape(5.dp),
-                properties = DialogProperties(
-                    dismissOnBackPress = true,
-                    dismissOnClickOutside = true
-                )
-            )
-        }
         3 -> { //Return to home after the driving finished
             AlertDialog(
-                onDismissRequest = {
-                    dialogState = 0
-                },
-                dismissButton = {
-                    TextButton(onClick = { dialogState = 0 }) { Text(text = "いいえ") }
-                },
+                onDismissRequest = { dialogState = 0 },
+                dismissButton = { TextButton(onClick = { dialogState = 0 }) { Text(text = "いいえ") } },
                 confirmButton = {
                     TextButton(onClick = {
                         dialogState = 0
@@ -191,21 +144,52 @@ fun drivingMainComposable() {
                         Text(text = "はい")
                     }
                 },
-                text = {
-                    Text(text = "QRコードは再発行できません。\nご注意ください。")
-                },
-                title = {
-                    Text(text = "ホームに戻りますか?")
-                },
-                modifier = Modifier // Set the width and padding
-                    .fillMaxWidth()
-                    .padding(32.dp),
+                text = { Text(text = "QRコードは再発行できません。\nご注意ください。") },
+                title = { Text(text = "ホームに戻りますか?") },
+                modifier = Modifier.fillMaxWidth().padding(32.dp),
                 shape = RoundedCornerShape(5.dp),
-                properties = DialogProperties(
-                    dismissOnBackPress = true,
-                    dismissOnClickOutside = true
-                )
+                properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = true)
             )
+        }
+        4 -> { //Getting Location by GPS
+            Dialog(
+                onDismissRequest = { dialogState = 0 },
+                properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().background(color = Color.White, shape = RoundedCornerShape(5.dp)).size(height = 100.dp, width = 200.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    CircularProgressIndicator()
+                    Spacer(modifier = Modifier.padding(15.dp))
+                    Text("GPS測位中です。\nしばらくお待ち下さい")
+                }
+                FusedLocationProviderClient(thisContext).getCurrentLocation(LocationRequest.PRIORITY_HIGH_ACCURACY, CancellationTokenSource().token)
+                    .addOnFailureListener { exception ->
+                        Toast.makeText(
+                            thisContext, "GPS測位に失敗しました。位置情報サービスなどを確かめた上で、再度お試しください", Toast.LENGTH_LONG
+                        ).show()
+                        dialogState = 0
+                    }
+                    .addOnSuccessListener { location ->
+                        with(locationDataPref.edit()) {
+                            putString("finishLatitude", (location.latitude).toString())
+                            putString("finishLongitude", (location.longitude).toString())
+                            apply()
+                        }
+
+                        dialogState = 0
+
+                        with(dStatePref.edit()){
+                            putInt("drivingState", 0)
+                            apply()
+                        }
+
+                        //Move to drivingEndedComposable
+                        isFinished = true
+                    }
+            }
         }
         else -> {}
     }
