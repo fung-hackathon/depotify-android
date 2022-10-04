@@ -2,6 +2,7 @@ package com.example.funhacks2022
 
 import android.Manifest
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
@@ -12,6 +13,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,15 +22,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.res.stringResource
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.funhacks2022.ui.theme.FunHacks2022Theme
 import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.tasks.CancellationTokenSource
 
 class HomeActivity : ComponentActivity() {
@@ -107,7 +111,8 @@ fun firstLandingComposable(
             onValueChange = { loginId = it },
             placeholder = { Text("引き継ぎコードを入力") },
             singleLine = true,
-            modifier = Modifier.size(width = 275.dp, height = 50.dp)
+            modifier = Modifier.size(width = 275.dp, height = 50.dp),
+            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Uri)
         )
         Spacer(modifier = Modifier.padding(5.dp))
         Button(
@@ -157,6 +162,8 @@ fun homeComposable() {
     var cancellationSource = CancellationTokenSource()
     var currentLocation = fusedLocationManager.lastLocation
 
+    val dStatePref = thisContext.getSharedPreferences(stringResource(R.string.DRIVING_STATE), Context.MODE_PRIVATE)
+
     Column(
         modifier = Modifier.fillMaxSize(),
     ){
@@ -172,12 +179,8 @@ fun homeComposable() {
             Spacer(modifier = Modifier.padding(25.dp))
             Button(
                 onClick = {
-//                    currentLocation = fusedLocationManager.getCurrentLocation(LocationRequest.PRIORITY_HIGH_ACCURACY, cancellationSource.token)
-//                    dialogOpen = true
-
-                    //If you don't call (Activity).finish() then user may back to old Activity by "BACK" button
-                    thisContext.startActivity(Intent(thisContext, DrivingActivity::class.java))
-                    (thisContext as Activity).finish()
+                    currentLocation = fusedLocationManager.getCurrentLocation(LocationRequest.PRIORITY_HIGH_ACCURACY, cancellationSource.token)
+                    dialogOpen = true
                 },
                 modifier = Modifier.size(width = 300.dp, height = 75.dp),
                 shape = RoundedCornerShape(50.dp)
@@ -197,6 +200,15 @@ fun homeComposable() {
                         TextButton(onClick = {
                             // perform the confirm action
                             dialogOpen = false
+
+                            with(dStatePref.edit()){
+                                putInt("drivingState", 1)
+                                apply()
+                            }
+
+                            //If you don't call (Activity).finish() then user may back to old Activity by "BACK" button
+                            thisContext.startActivity(Intent(thisContext, DrivingActivity::class.java))
+                            (thisContext as Activity).finish()
                         }) {
                             Text(text = "OK")
                         }
@@ -250,12 +262,16 @@ fun userIdComposable() {
 fun dataViewerComposable() {
     Column(
         modifier = Modifier
-            .border(2.dp, Color.Black)
+            .border(
+                width = 2.dp,
+                color = Color.DarkGray,
+                shape = RoundedCornerShape(20.dp)
+            )
             .size(width = 300.dp, height = 500.dp)
     ) {
-        Text(text = "あああああ", fontSize = 50.sp)
+        Text(text = "あああああ", fontSize = 50.sp, modifier = Modifier.padding(5.dp))
         Spacer(modifier = Modifier.padding(75.dp))
-        Text(text = "あああああ", fontSize = 50.sp)
+        Text(text = "あああああ", fontSize = 50.sp, modifier = Modifier.padding(5.dp))
     }
 }
 
