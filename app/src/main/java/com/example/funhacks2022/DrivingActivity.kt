@@ -18,7 +18,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
@@ -64,16 +63,10 @@ fun drivingMainComposable() {
                     dialogState = 0
                 },
                 dismissButton = {
-                    TextButton(onClick = {
-                        dialogState = 0
-
-                    }) {
-                        Text(text = "いいえ")
-                    }
+                    TextButton(onClick = { dialogState = 0 }) { Text(text = "いいえ") }
                 },
                 confirmButton = {
                     TextButton(onClick = {
-                        // perform the confirm action
                         dialogState = 0
 
                         //Update driving state
@@ -107,16 +100,10 @@ fun drivingMainComposable() {
                     dialogState = 0
                 },
                 dismissButton = {
-                    TextButton(onClick = {
-                        dialogState = 0
-
-                    }) {
-                        Text(text = "いいえ")
-                    }
+                    TextButton(onClick = { dialogState = 0 }) { Text(text = "いいえ") }
                 },
                 confirmButton = {
                     TextButton(onClick = {
-                        // perform the confirm action
                         dialogState = 0
 
                         //Update driving state
@@ -151,16 +138,10 @@ fun drivingMainComposable() {
                     dialogState = 0
                 },
                 dismissButton = {
-                    TextButton(onClick = {
-                        dialogState = 0
-
-                    }) {
-                        Text(text = "いいえ")
-                    }
+                    TextButton(onClick = { dialogState = 0 }) { Text(text = "いいえ") }
                 },
                 confirmButton = {
                     TextButton(onClick = {
-                        // perform the confirm action
                         dialogState = 0
 
                         //Update driving state
@@ -198,8 +179,6 @@ fun drivingMainComposable() {
 
 @Composable
 fun drivingComposable(clickFinish: ()->Unit, clickCancel: ()->Unit) {
-    val thisContext = LocalContext.current
-
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
@@ -231,8 +210,6 @@ fun drivingComposable(clickFinish: ()->Unit, clickCancel: ()->Unit) {
 
 @Composable
 fun drivingEndedComposable(clickBack: ()->Unit) {
-    val thisContext = LocalContext.current
-
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,

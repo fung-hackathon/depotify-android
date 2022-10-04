@@ -4,4 +4,5 @@
     <string name="title_activity_driving">DrivingActivity</string>
 
     <string name="DRIVING_STATE">funhacks2022DrivingState</string>
+    <string name="ARRIVE_STATE">funhacks2022ArriveState</string>
 </resources>

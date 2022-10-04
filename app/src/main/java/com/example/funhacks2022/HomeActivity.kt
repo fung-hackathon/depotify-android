@@ -56,16 +56,30 @@ class HomeActivity : ComponentActivity() {
 
 @Composable
 fun homeRootComposable(){
-    //isFirstLandingはAppStorageかなんかから持ってくる(暫定で値を設定している)
-    var isFirstLanding by remember { mutableStateOf(true) }
+    val aStatePref = LocalContext.current.getSharedPreferences(stringResource(R.string.ARRIVE_STATE), Context.MODE_PRIVATE)
+
+    var isFirstLanding by remember { mutableStateOf(aStatePref.getBoolean("isFirstLanding", true)) }
     if (isFirstLanding) {
         firstLandingComposable(
             newUserClick = {
                 /*TODO*/
+
+                //Change State
                 isFirstLanding = false
+                with(aStatePref.edit()){
+                    putBoolean("isFirstLanding", false)
+                    apply()
+                }
             },
             loginClick = {
+                /*TODO*/
+
+                //Change State
                 isFirstLanding = false
+                with(aStatePref.edit()){
+                    putBoolean("isFirstLanding", false)
+                    apply()
+                }
             }
         )
     }
@@ -180,6 +194,7 @@ fun homeComposable() {
             Button(
                 onClick = {
                     currentLocation = fusedLocationManager.getCurrentLocation(LocationRequest.PRIORITY_HIGH_ACCURACY, cancellationSource.token)
+
                     dialogOpen = true
                 },
                 modifier = Modifier.size(width = 300.dp, height = 75.dp),
@@ -191,16 +206,12 @@ fun homeComposable() {
             if (dialogOpen) {
                 AlertDialog(
                     onDismissRequest = {
-                        // Dismiss the dialog when the user clicks outside the dialog or on the back
-                        // button. If you want to disable that functionality,
-                        // simply leave this block empty.
                         dialogOpen = false
                     },
                     confirmButton = {
                         TextButton(onClick = {
-                            // perform the confirm action
+                            //Changing State
                             dialogOpen = false
-
                             with(dStatePref.edit()){
                                 putInt("drivingState", 1)
                                 apply()

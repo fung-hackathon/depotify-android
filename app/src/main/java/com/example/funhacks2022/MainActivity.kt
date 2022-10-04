@@ -30,7 +30,9 @@ class MainActivity : ComponentActivity() {
                     val sharedPref = LocalContext.current.getSharedPreferences(stringResource(R.string.DRIVING_STATE), Context.MODE_PRIVATE)
                     var drivingState = -1
 
-                    if (sharedPref == null) Log.d("Information", "Null")
+                    if (sharedPref == null) {
+                        Log.d("Information", "Null")
+                    }
                     else {
                         drivingState = sharedPref.getInt("drivingState", -1)
                     }
