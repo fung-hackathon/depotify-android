@@ -1,5 +1,9 @@
 <resources>
     <string name="app_name">funHacks2022</string>
     <string name="title_activity_home">HomeActivity</string>
-    <string name="title_activity_driving">DrivingActivity</string>>
+    <string name="title_activity_driving">DrivingActivity</string>
+
+    <string name="DRIVING_STATE">funhacks2022DrivingState</string>
+    <string name="ARRIVE_STATE">funhacks2022ArriveState</string>
+    <string name="LOCATION_DATA">funhacks2022LocationData</string>
 </resources>

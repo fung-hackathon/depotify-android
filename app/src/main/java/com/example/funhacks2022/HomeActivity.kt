@@ -2,16 +2,19 @@ package com.example.funhacks2022
 
 import android.Manifest
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,15 +23,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.window.Dialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.funhacks2022.ui.theme.FunHacks2022Theme
 import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.tasks.CancellationTokenSource
 
 class HomeActivity : ComponentActivity() {
@@ -52,16 +58,30 @@ class HomeActivity : ComponentActivity() {
 
 @Composable
 fun homeRootComposable(){
-    //isFirstLandingはAppStorageかなんかから持ってくる(暫定で値を設定している)
-    var isFirstLanding by remember { mutableStateOf(true) }
+    val aStatePref = LocalContext.current.getSharedPreferences(stringResource(R.string.ARRIVE_STATE), Context.MODE_PRIVATE)
+
+    var isFirstLanding by remember { mutableStateOf(aStatePref.getBoolean("isFirstLanding", true)) }
     if (isFirstLanding) {
         firstLandingComposable(
             newUserClick = {
                 /*TODO*/
+
+                //Change State
                 isFirstLanding = false
+                with(aStatePref.edit()){
+                    putBoolean("isFirstLanding", false)
+                    apply()
+                }
             },
             loginClick = {
+                /*TODO*/
+
+                //Change State
                 isFirstLanding = false
+                with(aStatePref.edit()){
+                    putBoolean("isFirstLanding", false)
+                    apply()
+                }
             }
         )
     }
@@ -107,7 +127,8 @@ fun firstLandingComposable(
             onValueChange = { loginId = it },
             placeholder = { Text("引き継ぎコードを入力") },
             singleLine = true,
-            modifier = Modifier.size(width = 275.dp, height = 50.dp)
+            modifier = Modifier.size(width = 275.dp, height = 50.dp),
+            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Uri)
         )
         Spacer(modifier = Modifier.padding(5.dp))
         Button(
@@ -138,7 +159,7 @@ fun loginValidator(loginId: String): Boolean{
 @Composable
 fun homeComposable() {
     val thisContext = LocalContext.current
-    var dialogOpen by remember { mutableStateOf(false) }
+    var dialogState by remember { mutableStateOf(0) }
 
     //How I can move "Getting Geo Location" codes to independent class?
     val REQUEST_CODE = 1234
@@ -153,9 +174,8 @@ fun homeComposable() {
         )
     }
 
-    val fusedLocationManager = FusedLocationProviderClient(thisContext)
-    var cancellationSource = CancellationTokenSource()
-    var currentLocation = fusedLocationManager.lastLocation
+    val dStatePref = thisContext.getSharedPreferences(stringResource(R.string.DRIVING_STATE), Context.MODE_PRIVATE)
+    val locationDataPref = thisContext.getSharedPreferences(stringResource(R.string.LOCATION_DATA), Context.MODE_PRIVATE)
 
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -172,12 +192,7 @@ fun homeComposable() {
             Spacer(modifier = Modifier.padding(25.dp))
             Button(
                 onClick = {
-//                    currentLocation = fusedLocationManager.getCurrentLocation(LocationRequest.PRIORITY_HIGH_ACCURACY, cancellationSource.token)
-//                    dialogOpen = true
-
-                    //If you don't call (Activity).finish() then user may back to old Activity by "BACK" button
-                    thisContext.startActivity(Intent(thisContext, DrivingActivity::class.java))
-                    (thisContext as Activity).finish()
+                    dialogState = 1
                 },
                 modifier = Modifier.size(width = 300.dp, height = 75.dp),
                 shape = RoundedCornerShape(50.dp)
@@ -185,40 +200,61 @@ fun homeComposable() {
                 Text(text = "送迎を開始", fontSize = 28.sp)
             }
 
-            if (dialogOpen) {
+            if (dialogState == 1) {
                 AlertDialog(
-                    onDismissRequest = {
-                        // Dismiss the dialog when the user clicks outside the dialog or on the back
-                        // button. If you want to disable that functionality,
-                        // simply leave this block empty.
-                        dialogOpen = false
-                    },
-                    confirmButton = {
-                        TextButton(onClick = {
-                            // perform the confirm action
-                            dialogOpen = false
-                        }) {
-                            Text(text = "OK")
-                        }
-                    },
-                    title = {
-                        Text(text = "Current Location")
-                    },
-                    text = {
-                        val lat = currentLocation.result.latitude
-                        val lot = currentLocation.result.longitude
-                        Text(text = "latitude: $lat\nlongitude: $lot")
-                    },
-                    modifier = Modifier // Set the width and padding
+                    onDismissRequest = { dialogState = 0 },
+                    dismissButton = { TextButton(onClick = { dialogState = 0 }) { Text("いいえ") } },
+                    confirmButton = { TextButton(onClick = { dialogState = 2 }) { Text(text = "はい") } },
+                    title = { Text(text = "送迎を開始しますか?") },
+                    text = { Text(text = "同乗者を乗せてから開始してください。\n出発点と到着点が同じ場合は、記録が無効となることに注意してください。") },
+                    modifier = Modifier
                         .fillMaxWidth()
                         .padding(32.dp),
                     shape = RoundedCornerShape(5.dp),
-                    backgroundColor = Color.White,
-                    properties = DialogProperties(
-                        dismissOnBackPress = true,
-                        dismissOnClickOutside = true
-                    )
+                    properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = true)
                 )
+            }
+            else if (dialogState == 2){
+                Dialog(
+                    onDismissRequest = { dialogState = 0 },
+                    properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().background(color = Color.White, shape = RoundedCornerShape(5.dp)).size(height = 100.dp, width = 200.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        CircularProgressIndicator()
+                        Spacer(modifier = Modifier.padding(15.dp))
+                        Text("GPS測位中です。\nしばらくお待ち下さい")
+                    }
+
+                    FusedLocationProviderClient(thisContext).getCurrentLocation(LocationRequest.PRIORITY_HIGH_ACCURACY, CancellationTokenSource().token)
+                        .addOnFailureListener { exception ->
+                            Toast.makeText(
+                                thisContext, "GPS測位に失敗しました。位置情報サービスなどを確かめた上で、再度お試しください", Toast.LENGTH_LONG
+                            ).show()
+                            dialogState = 0
+                        }
+                        .addOnSuccessListener { location ->
+                            with(locationDataPref.edit()) {
+                                putString("startLatitude", (location.latitude).toString())
+                                putString("startLongitude", (location.longitude).toString())
+                                apply()
+                            }
+
+                            dialogState = 0
+
+                            with(dStatePref.edit()){
+                                putInt("drivingState", 1)
+                                apply()
+                            }
+
+                            //Destroy this Activity
+                            thisContext.startActivity(Intent(thisContext, DrivingActivity::class.java))
+                            (thisContext as Activity).finish()
+                        }
+                }
             }
         }
     }
@@ -250,12 +286,16 @@ fun userIdComposable() {
 fun dataViewerComposable() {
     Column(
         modifier = Modifier
-            .border(2.dp, Color.Black)
+            .border(
+                width = 2.dp,
+                color = Color.DarkGray,
+                shape = RoundedCornerShape(20.dp)
+            )
             .size(width = 300.dp, height = 500.dp)
     ) {
-        Text(text = "あああああ", fontSize = 50.sp)
+        Text(text = "あああああ", fontSize = 50.sp, modifier = Modifier.padding(5.dp))
         Spacer(modifier = Modifier.padding(75.dp))
-        Text(text = "あああああ", fontSize = 50.sp)
+        Text(text = "あああああ", fontSize = 50.sp, modifier = Modifier.padding(5.dp))
     }
 }
 
