@@ -1,6 +1,7 @@
 package com.example.funhacks2022
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -8,21 +9,19 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Button
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.DialogProperties
 import com.example.funhacks2022.ui.theme.FunHacks2022Theme
 
 class DrivingActivity : ComponentActivity() {
@@ -30,20 +29,13 @@ class DrivingActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             /*TODO: Create Theme*/
-
-            var isFinished by remember { mutableStateOf(false) }
             FunHacks2022Theme {
                 // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colors.background
                 ) {
-                    if (!isFinished) {
-                        drivingComposable(clickFinish = { isFinished = true })
-                    }
-                    else {
-                        drivingEndedComposable()
-                    }
+                    drivingMainComposable()
                 }
             }
         }
@@ -51,7 +43,161 @@ class DrivingActivity : ComponentActivity() {
 }
 
 @Composable
-fun drivingComposable(clickFinish: ()->Unit) {
+fun drivingMainComposable() {
+    var isFinished by remember { mutableStateOf(false) }
+    var dialogState by remember { mutableStateOf(0) }
+
+    val thisContext = LocalContext.current
+    val dStatePref = thisContext.getSharedPreferences(stringResource(R.string.DRIVING_STATE), Context.MODE_PRIVATE)
+
+    if (!isFinished) {
+        drivingComposable(clickFinish = { dialogState = 1 }, clickCancel = { dialogState = 2 })
+    }
+    else {
+        drivingEndedComposable(clickBack = { dialogState = 3 })
+    }
+
+    when(dialogState) {
+        1 -> { //Finish Driving
+            AlertDialog(
+                onDismissRequest = {
+                    dialogState = 0
+                },
+                dismissButton = {
+                    TextButton(onClick = {
+                        dialogState = 0
+
+                    }) {
+                        Text(text = "いいえ")
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        // perform the confirm action
+                        dialogState = 0
+
+                        //Update driving state
+                        with(dStatePref.edit()){
+                            putInt("drivingState", 0)
+                            apply()
+                        }
+
+                        //Move to drivingEndedComposable
+                        isFinished = true
+                    }) {
+                        Text(text = "はい")
+                    }
+                },
+                title = {
+                    Text(text = "送迎を終了しますか?")
+                },
+                modifier = Modifier // Set the width and padding
+                    .fillMaxWidth()
+                    .padding(32.dp),
+                shape = RoundedCornerShape(5.dp),
+                properties = DialogProperties(
+                    dismissOnBackPress = true,
+                    dismissOnClickOutside = true
+                )
+            )
+        }
+        2 -> { //Cancel Driving
+            AlertDialog(
+                onDismissRequest = {
+                    dialogState = 0
+                },
+                dismissButton = {
+                    TextButton(onClick = {
+                        dialogState = 0
+
+                    }) {
+                        Text(text = "いいえ")
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        // perform the confirm action
+                        dialogState = 0
+
+                        //Update driving state
+                        with(dStatePref.edit()){
+                            putInt("drivingState", 0)
+                            apply()
+                        }
+
+                        //Back to HomeActivity directly
+                        thisContext.startActivity(Intent(thisContext, HomeActivity::class.java))
+                        (thisContext as Activity).finish()
+                    }) {
+                        Text(text = "はい")
+                    }
+                },
+                title = {
+                    Text(text = "送迎を中止(キャンセル)しますか?")
+                },
+                modifier = Modifier // Set the width and padding
+                    .fillMaxWidth()
+                    .padding(32.dp),
+                shape = RoundedCornerShape(5.dp),
+                properties = DialogProperties(
+                    dismissOnBackPress = true,
+                    dismissOnClickOutside = true
+                )
+            )
+        }
+        3 -> { //Return to home after the driving finished
+            AlertDialog(
+                onDismissRequest = {
+                    dialogState = 0
+                },
+                dismissButton = {
+                    TextButton(onClick = {
+                        dialogState = 0
+
+                    }) {
+                        Text(text = "いいえ")
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        // perform the confirm action
+                        dialogState = 0
+
+                        //Update driving state
+                        with(dStatePref.edit()){
+                            putInt("drivingState", 0)
+                            apply()
+                        }
+
+                        //Back to HomeActivity directly
+                        thisContext.startActivity(Intent(thisContext, HomeActivity::class.java))
+                        (thisContext as Activity).finish()
+                    }) {
+                        Text(text = "はい")
+                    }
+                },
+                text = {
+                    Text(text = "QRコードは再発行できません。\nご注意ください。")
+                },
+                title = {
+                    Text(text = "ホームに戻りますか?")
+                },
+                modifier = Modifier // Set the width and padding
+                    .fillMaxWidth()
+                    .padding(32.dp),
+                shape = RoundedCornerShape(5.dp),
+                properties = DialogProperties(
+                    dismissOnBackPress = true,
+                    dismissOnClickOutside = true
+                )
+            )
+        }
+        else -> {}
+    }
+}
+
+@Composable
+fun drivingComposable(clickFinish: ()->Unit, clickCancel: ()->Unit) {
     val thisContext = LocalContext.current
 
     Column(
@@ -74,11 +220,7 @@ fun drivingComposable(clickFinish: ()->Unit) {
         Spacer(modifier = Modifier.padding(20.dp))
 
         Button(
-            onClick = {
-                //If cancelled, back to MainActivity directly
-                thisContext.startActivity(Intent(thisContext, MainActivity::class.java))
-                (thisContext as Activity).finish()
-            },
+            onClick = clickCancel,
             modifier = Modifier.size(width = 275.dp, height = 50.dp),
             shape = RoundedCornerShape(50.dp)
         ) {
@@ -88,7 +230,7 @@ fun drivingComposable(clickFinish: ()->Unit) {
 }
 
 @Composable
-fun drivingEndedComposable() {
+fun drivingEndedComposable(clickBack: ()->Unit) {
     val thisContext = LocalContext.current
 
     Column(
@@ -120,11 +262,7 @@ fun drivingEndedComposable() {
         Spacer(modifier = Modifier.padding(60.dp))
 
         Button(
-            onClick = {
-                /* Is it all that back to home menu that I have to do here? */
-                thisContext.startActivity(Intent(thisContext, MainActivity::class.java))
-                (thisContext as Activity).finish()
-            },
+            onClick = clickBack,
             modifier = Modifier.size(width = 275.dp, height = 50.dp),
             shape = RoundedCornerShape(50.dp)
         ){
@@ -133,11 +271,11 @@ fun drivingEndedComposable() {
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    FunHacks2022Theme {
-        //drivingComposable()
-        drivingEndedComposable()
-    }
-}
+//@Preview(showBackground = true)
+//@Composable
+//fun DefaultPreview() {
+//    FunHacks2022Theme {
+//        //drivingComposable()
+//        drivingEndedComposable()
+//    }
+//}
