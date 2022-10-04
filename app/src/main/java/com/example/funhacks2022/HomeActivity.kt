@@ -177,6 +177,7 @@ fun homeComposable() {
     var currentLocation = fusedLocationManager.lastLocation
 
     val dStatePref = thisContext.getSharedPreferences(stringResource(R.string.DRIVING_STATE), Context.MODE_PRIVATE)
+    val locationDataPref = thisContext.getSharedPreferences(stringResource(R.string.LOCATION_DATA), Context.MODE_PRIVATE)
 
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -194,7 +195,6 @@ fun homeComposable() {
             Button(
                 onClick = {
                     currentLocation = fusedLocationManager.getCurrentLocation(LocationRequest.PRIORITY_HIGH_ACCURACY, cancellationSource.token)
-
                     dialogOpen = true
                 },
                 modifier = Modifier.size(width = 300.dp, height = 75.dp),
@@ -208,8 +208,20 @@ fun homeComposable() {
                     onDismissRequest = {
                         dialogOpen = false
                     },
+                    dismissButton = {
+                        TextButton(onClick = { dialogOpen = false }) { Text("いいえ") }
+                    },
                     confirmButton = {
                         TextButton(onClick = {
+                            //Save start point
+                            val latStr = (currentLocation.result.latitude).toString()
+                            val lotStr = (currentLocation.result.longitude).toString()
+                            with(locationDataPref.edit()){
+                                putString("startLatitude", latStr)
+                                putString("startLongitude", lotStr)
+                                apply()
+                            }
+
                             //Changing State
                             dialogOpen = false
                             with(dStatePref.edit()){
@@ -221,16 +233,14 @@ fun homeComposable() {
                             thisContext.startActivity(Intent(thisContext, DrivingActivity::class.java))
                             (thisContext as Activity).finish()
                         }) {
-                            Text(text = "OK")
+                            Text(text = "はい")
                         }
                     },
                     title = {
-                        Text(text = "Current Location")
+                        Text(text = "送迎を開始しますか?")
                     },
                     text = {
-                        val lat = currentLocation.result.latitude
-                        val lot = currentLocation.result.longitude
-                        Text(text = "latitude: $lat\nlongitude: $lot")
+                        Text(text = "同乗者を乗せてから開始してください。\n出発点と到着点が同じ場合は、記録が無効となることに注意してください。")
                     },
                     modifier = Modifier // Set the width and padding
                         .fillMaxWidth()

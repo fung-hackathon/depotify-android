@@ -1,12 +1,17 @@
 package com.example.funhacks2022
 
+import android.Manifest
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.location.Location
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
@@ -20,8 +25,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.example.funhacks2022.ui.theme.FunHacks2022Theme
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.tasks.CancellationTokenSource
+import com.google.android.gms.tasks.Task
 
 class DrivingActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,10 +59,43 @@ fun drivingMainComposable() {
     var dialogState by remember { mutableStateOf(0) }
 
     val thisContext = LocalContext.current
+
+    val REQUEST_CODE = 1234
+    if (ContextCompat.checkSelfPermission(thisContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
+        Log.d("GPS permission", "GPS access granted")
+    }
+    else {
+        ActivityCompat.requestPermissions(
+            thisContext as Activity,
+            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+            REQUEST_CODE
+        )
+    }
+
+    val fusedLocationManager = FusedLocationProviderClient(thisContext)
+    val canncellationSource = CancellationTokenSource()
+
     val dStatePref = thisContext.getSharedPreferences(stringResource(R.string.DRIVING_STATE), Context.MODE_PRIVATE)
+    val locationDataPref = thisContext.getSharedPreferences(stringResource(R.string.LOCATION_DATA), Context.MODE_PRIVATE)
 
     if (!isFinished) {
-        drivingComposable(clickFinish = { dialogState = 1 }, clickCancel = { dialogState = 2 })
+        drivingComposable(clickFinish = {
+            fusedLocationManager
+                .getCurrentLocation(LocationRequest.PRIORITY_HIGH_ACCURACY, canncellationSource.token)
+                .addOnSuccessListener { location ->
+                    val latStr = (location.latitude).toString()
+                    val lotStr = (location.longitude).toString()
+
+                    with(locationDataPref.edit()){
+                        putString("finishLatitude", latStr)
+                        putString("finishLongitude", lotStr)
+                        apply()
+                    }
+
+                    dialogState = 1
+                }
+        },
+        clickCancel = { dialogState = 2 })
     }
     else {
         drivingEndedComposable(clickBack = { dialogState = 3 })
@@ -59,12 +104,8 @@ fun drivingMainComposable() {
     when(dialogState) {
         1 -> { //Finish Driving
             AlertDialog(
-                onDismissRequest = {
-                    dialogState = 0
-                },
-                dismissButton = {
-                    TextButton(onClick = { dialogState = 0 }) { Text(text = "いいえ") }
-                },
+                onDismissRequest = { dialogState = 0 },
+                dismissButton = { TextButton(onClick = { dialogState = 0 }) { Text(text = "いいえ") } },
                 confirmButton = {
                     TextButton(onClick = {
                         dialogState = 0
@@ -81,17 +122,10 @@ fun drivingMainComposable() {
                         Text(text = "はい")
                     }
                 },
-                title = {
-                    Text(text = "送迎を終了しますか?")
-                },
-                modifier = Modifier // Set the width and padding
-                    .fillMaxWidth()
-                    .padding(32.dp),
+                title = { Text(text = "送迎を終了しますか?") },
+                modifier = Modifier.fillMaxWidth().padding(32.dp),
                 shape = RoundedCornerShape(5.dp),
-                properties = DialogProperties(
-                    dismissOnBackPress = true,
-                    dismissOnClickOutside = true
-                )
+                properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = true)
             )
         }
         2 -> { //Cancel Driving
@@ -210,11 +244,22 @@ fun drivingComposable(clickFinish: ()->Unit, clickCancel: ()->Unit) {
 
 @Composable
 fun drivingEndedComposable(clickBack: ()->Unit) {
+    val thisContext = LocalContext.current
+    val locationDataPref = thisContext.getSharedPreferences(stringResource(R.string.LOCATION_DATA), Context.MODE_PRIVATE)
+
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ){
+        //For debug. Delete it later
+        val startLat = locationDataPref.getString("startLatitude", "null")
+        val startLot = locationDataPref.getString("startLongitude", "null")
+        val finishLat = locationDataPref.getString("finishLatitude", "null")
+        val finishLot = locationDataPref.getString("finishLongitude", "null")
+
+        Text(text = "startLat: $startLat, startLot: $startLot\nfinishLat: $finishLat, finishLot: $finishLot")
+
         Text(
             text = "送迎を終了しました",
             fontSize = 29.sp,
