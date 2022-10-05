@@ -64,9 +64,10 @@ fun homeRootComposable(){
     if (isFirstLanding) {
         firstLandingComposable(
             newUserClick = {
-                /*TODO*/
+                /*TODO:
+                   process written below should separated to other space since communication with API must be async
+                */
 
-                //Change State
                 isFirstLanding = false
                 with(aStatePref.edit()){
                     putBoolean("isFirstLanding", false)
@@ -74,9 +75,10 @@ fun homeRootComposable(){
                 }
             },
             loginClick = {
-                /*TODO*/
+                /*TODO:
+                   process written below should separated to other space since communication with API must be async
+                */
 
-                //Change State
                 isFirstLanding = false
                 with(aStatePref.edit()){
                     putBoolean("isFirstLanding", false)
@@ -108,7 +110,8 @@ fun firstLandingComposable(
 
         Button(
             onClick = newUserClick,
-            modifier = Modifier.size(width = 275.dp, height = 50.dp)
+            modifier = Modifier.size(width = 275.dp, height = 55.dp),
+            shape = RoundedCornerShape(50.dp)
         ){
             Text("新規登録", fontSize = 16.sp)
         }
@@ -127,7 +130,7 @@ fun firstLandingComposable(
             onValueChange = { loginId = it },
             placeholder = { Text("引き継ぎコードを入力") },
             singleLine = true,
-            modifier = Modifier.size(width = 275.dp, height = 50.dp),
+            modifier = Modifier.size(width = 275.dp, height = 55.dp),
             keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Uri)
         )
         Spacer(modifier = Modifier.padding(5.dp))
@@ -137,14 +140,11 @@ fun firstLandingComposable(
                     loginClick()
                 }
                 else {
-                    Toast.makeText(
-                        context,
-                        "不正な引き継ぎコードです。\n再度、確認してください。",
-                        Toast.LENGTH_LONG
-                    ).show()
+                    Toast.makeText(context, "不正な引き継ぎコードです。\n再度、確認してください。", Toast.LENGTH_LONG).show()
                 }
             },
-            modifier = Modifier.size(width = 275.dp, height = 50.dp)
+            modifier = Modifier.size(width = 275.dp, height = 55.dp),
+            shape = RoundedCornerShape(50.dp)
         ) {
             Text("データを引き継ぎ", fontSize = 16.sp)
         }
@@ -179,83 +179,80 @@ fun homeComposable() {
 
     Column(
         modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
     ){
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            userIdComposable()
+        userIdComposable()
 
-            Spacer(modifier = Modifier.padding(5.dp))
-            dataViewerComposable()
-            Spacer(modifier = Modifier.padding(25.dp))
+        Spacer(modifier = Modifier.padding(5.dp))
+        Surface(elevation = 10.dp, shape = RoundedCornerShape(20.dp)) { dataViewerComposable() }
+        Spacer(modifier = Modifier.padding(25.dp))
+
+        Surface(elevation = 10.dp, shape = RoundedCornerShape(50.dp)) {
             Button(
-                onClick = {
-                    dialogState = 1
-                },
+                onClick = { dialogState = 1 },
                 modifier = Modifier.size(width = 300.dp, height = 75.dp),
                 shape = RoundedCornerShape(50.dp)
             ) {
                 Text(text = "送迎を開始", fontSize = 28.sp)
             }
+        }
+    }
 
-            if (dialogState == 1) {
-                AlertDialog(
-                    onDismissRequest = { dialogState = 0 },
-                    dismissButton = { TextButton(onClick = { dialogState = 0 }) { Text("いいえ") } },
-                    confirmButton = { TextButton(onClick = { dialogState = 2 }) { Text(text = "はい") } },
-                    title = { Text(text = "送迎を開始しますか?") },
-                    text = { Text(text = "同乗者を乗せてから開始してください。\n出発点と到着点が同じ場合は、記録が無効となることに注意してください。") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(32.dp),
-                    shape = RoundedCornerShape(5.dp),
-                    properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = true)
-                )
+    if (dialogState == 1) {
+        AlertDialog(
+            onDismissRequest = { dialogState = 0 },
+            dismissButton = { TextButton(onClick = { dialogState = 0 }) { Text("いいえ") } },
+            confirmButton = { TextButton(onClick = { dialogState = 2 }) { Text(text = "はい") } },
+            title = { Text(text = "送迎を開始しますか?") },
+            text = { Text(text = "同乗者を乗せてから開始してください。\n出発点と到着点が同じ場合は、記録が無効となることに注意してください。") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(32.dp),
+            shape = RoundedCornerShape(5.dp),
+            properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = true)
+        )
+    }
+    else if (dialogState == 2){
+        Dialog(
+            onDismissRequest = { dialogState = 0 },
+            properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth().background(color = Color.White, shape = RoundedCornerShape(5.dp)).size(height = 100.dp, width = 200.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                CircularProgressIndicator()
+                Spacer(modifier = Modifier.padding(15.dp))
+                Text("GPS測位中です。\nしばらくお待ち下さい")
             }
-            else if (dialogState == 2){
-                Dialog(
-                    onDismissRequest = { dialogState = 0 },
-                    properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().background(color = Color.White, shape = RoundedCornerShape(5.dp)).size(height = 100.dp, width = 200.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        CircularProgressIndicator()
-                        Spacer(modifier = Modifier.padding(15.dp))
-                        Text("GPS測位中です。\nしばらくお待ち下さい")
+
+            FusedLocationProviderClient(thisContext).getCurrentLocation(LocationRequest.PRIORITY_HIGH_ACCURACY, CancellationTokenSource().token)
+                .addOnFailureListener { exception ->
+                    Toast.makeText(
+                        thisContext, "GPS測位に失敗しました。位置情報サービスなどを確かめた上で、再度お試しください", Toast.LENGTH_LONG
+                    ).show()
+                    dialogState = 0
+                }
+                .addOnSuccessListener { location ->
+                    with(locationDataPref.edit()) {
+                        putString("startLatitude", (location.latitude).toString())
+                        putString("startLongitude", (location.longitude).toString())
+                        apply()
                     }
 
-                    FusedLocationProviderClient(thisContext).getCurrentLocation(LocationRequest.PRIORITY_HIGH_ACCURACY, CancellationTokenSource().token)
-                        .addOnFailureListener { exception ->
-                            Toast.makeText(
-                                thisContext, "GPS測位に失敗しました。位置情報サービスなどを確かめた上で、再度お試しください", Toast.LENGTH_LONG
-                            ).show()
-                            dialogState = 0
-                        }
-                        .addOnSuccessListener { location ->
-                            with(locationDataPref.edit()) {
-                                putString("startLatitude", (location.latitude).toString())
-                                putString("startLongitude", (location.longitude).toString())
-                                apply()
-                            }
+                    dialogState = 0
 
-                            dialogState = 0
+                    with(dStatePref.edit()){
+                        putInt("drivingState", 1)
+                        apply()
+                    }
 
-                            with(dStatePref.edit()){
-                                putInt("drivingState", 1)
-                                apply()
-                            }
-
-                            //Destroy this Activity
-                            thisContext.startActivity(Intent(thisContext, DrivingActivity::class.java))
-                            (thisContext as Activity).finish()
-                        }
+                    //Destroy this Activity
+                    thisContext.startActivity(Intent(thisContext, DrivingActivity::class.java))
+                    (thisContext as Activity).finish()
                 }
-            }
         }
     }
 }
@@ -268,7 +265,7 @@ fun userIdComposable() {
     if (!showId){
         ClickableText(
             text = AnnotatedString("引き継ぎコード: ここをタップして表示"),
-            style = TextStyle( fontSize = 14.sp ),
+            style = TextStyle( fontSize = 13.sp ),
             modifier = Modifier.size(width = 300.dp, height = 18.dp),
             onClick = { showId = true }
         )
@@ -276,7 +273,7 @@ fun userIdComposable() {
     else {
         Text(
             text = "引き継ぎコード: $userId",
-            fontSize = 14.sp,
+            fontSize = 13.sp,
             modifier = Modifier.size(width = 300.dp, height = 18.dp)
         )
     }
@@ -286,23 +283,11 @@ fun userIdComposable() {
 fun dataViewerComposable() {
     Column(
         modifier = Modifier
-            .border(
-                width = 2.dp,
-                color = Color.DarkGray,
-                shape = RoundedCornerShape(20.dp)
-            )
-            .size(width = 300.dp, height = 500.dp)
+            //.border(width = 2.dp, color = Color.DarkGray, shape = RoundedCornerShape(20.dp))
+            .size(width = 300.dp, height = 450.dp)
     ) {
         Text(text = "あああああ", fontSize = 50.sp, modifier = Modifier.padding(5.dp))
         Spacer(modifier = Modifier.padding(75.dp))
         Text(text = "あああああ", fontSize = 50.sp, modifier = Modifier.padding(5.dp))
     }
 }
-
-//@Preview(showBackground = true)
-//@Composable
-//fun DefaultPreview2() {
-//    FunHacks2022Theme {
-//        Greeting("Android")
-//    }
-//}

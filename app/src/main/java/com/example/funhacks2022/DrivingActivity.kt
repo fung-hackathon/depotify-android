@@ -243,7 +243,6 @@ fun drivingEndedComposable(clickBack: ()->Unit) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ){
-        //For debug. Delete it later
         Text(
             text = "送迎を終了しました",
             fontSize = 29.sp,
@@ -282,12 +281,3 @@ fun drivingEndedComposable(clickBack: ()->Unit) {
         }
     }
 }
-
-//@Preview(showBackground = true)
-//@Composable
-//fun DefaultPreview() {
-//    FunHacks2022Theme {
-//        //drivingComposable()
-//        drivingEndedComposable()
-//    }
-//}
