@@ -30,6 +30,8 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.funhacks2022.ui.theme.FunHacks2022Theme
+import com.example.funhacks2022.ui.theme.WarningColor
+import com.example.funhacks2022.ui.theme.WarningTextColor
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.tasks.CancellationTokenSource
@@ -91,7 +93,8 @@ fun drivingMainComposable() {
                 title = { Text(text = "送迎を終了しますか?") },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(32.dp),
+                    .padding(32.dp)
+                    .background(MaterialTheme.colors.background),
                 shape = RoundedCornerShape(5.dp),
                 properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = true)
             )
@@ -120,7 +123,8 @@ fun drivingMainComposable() {
                 title = { Text(text = "送迎を中止(キャンセル)しますか?") },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(32.dp),
+                    .padding(32.dp)
+                    .background(MaterialTheme.colors.background),
                 shape = RoundedCornerShape(5.dp),
                 properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = true)
             )
@@ -150,7 +154,8 @@ fun drivingMainComposable() {
                 title = { Text(text = "ホームに戻りますか?") },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(32.dp),
+                    .padding(32.dp)
+                    .background(MaterialTheme.colors.background),
                 shape = RoundedCornerShape(5.dp),
                 properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = true)
             )
@@ -163,7 +168,7 @@ fun drivingMainComposable() {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(color = Color.White, shape = RoundedCornerShape(5.dp))
+                        .background(color = MaterialTheme.colors.background, shape = RoundedCornerShape(5.dp))
                         .size(height = 100.dp, width = 200.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center
@@ -226,9 +231,10 @@ fun drivingComposable(clickFinish: ()->Unit, clickCancel: ()->Unit) {
         Button(
             onClick = clickCancel,
             modifier = Modifier.size(width = 275.dp, height = 50.dp),
-            shape = RoundedCornerShape(50.dp)
+            shape = RoundedCornerShape(50.dp),
+            colors = ButtonDefaults.buttonColors(contentColor = MaterialTheme.typography.body1.color, backgroundColor = WarningColor)
         ) {
-            Text(text = "送迎を中止", color = Color.Red, fontSize = 16.sp)
+            Text(text = "送迎を中止", color = WarningTextColor, fontSize = 16.sp)
         }
     }
 }

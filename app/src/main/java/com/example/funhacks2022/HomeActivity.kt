@@ -100,9 +100,9 @@ fun firstLandingComposable(
     var loginId by remember { mutableStateOf("") }
     val context = LocalContext.current
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().background(MaterialTheme.colors.background),
         verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(text = "Welcome!", fontSize = 60.sp)
 
@@ -111,7 +111,7 @@ fun firstLandingComposable(
         Button(
             onClick = newUserClick,
             modifier = Modifier.size(width = 275.dp, height = 55.dp),
-            shape = RoundedCornerShape(50.dp)
+            shape = RoundedCornerShape(50.dp),
         ){
             Text("新規登録", fontSize = 16.sp)
         }
@@ -208,8 +208,8 @@ fun homeComposable() {
             text = { Text(text = "同乗者を乗せてから開始してください。\n出発点と到着点が同じ場合は、記録が無効となることに注意してください。") },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(32.dp),
-            shape = RoundedCornerShape(5.dp),
+                .background(MaterialTheme.colors.background, shape = RoundedCornerShape(10.dp)),
+            shape = RoundedCornerShape(10.dp),
             properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = true)
         )
     }
@@ -219,7 +219,7 @@ fun homeComposable() {
             properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false)
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth().background(color = Color.White, shape = RoundedCornerShape(5.dp)).size(height = 100.dp, width = 200.dp),
+                modifier = Modifier.fillMaxWidth().background(color = MaterialTheme.colors.background, shape = RoundedCornerShape(5.dp)).size(height = 100.dp, width = 200.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
@@ -265,7 +265,7 @@ fun userIdComposable() {
     if (!showId){
         ClickableText(
             text = AnnotatedString("引き継ぎコード: ここをタップして表示"),
-            style = TextStyle( fontSize = 13.sp ),
+            style = TextStyle( fontSize = 13.sp , color = MaterialTheme.typography.body1.color ),
             modifier = Modifier.size(width = 300.dp, height = 18.dp),
             onClick = { showId = true }
         )
@@ -274,7 +274,8 @@ fun userIdComposable() {
         Text(
             text = "引き継ぎコード: $userId",
             fontSize = 13.sp,
-            modifier = Modifier.size(width = 300.dp, height = 18.dp)
+            modifier = Modifier.size(width = 300.dp, height = 18.dp),
+            color = MaterialTheme.typography.body1.color
         )
     }
 }
