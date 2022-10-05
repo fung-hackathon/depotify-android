@@ -5,13 +5,11 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.location.Location
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -21,7 +19,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -36,9 +33,6 @@ import com.example.funhacks2022.ui.theme.FunHacks2022Theme
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.tasks.CancellationTokenSource
-import com.google.android.gms.tasks.Task
-import com.google.zxing.BarcodeFormat
-import com.journeyapps.barcodescanner.BarcodeEncoder
 
 class DrivingActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -250,12 +244,6 @@ fun drivingEndedComposable(clickBack: ()->Unit) {
         horizontalAlignment = Alignment.CenterHorizontally
     ){
         //For debug. Delete it later
-        val startLat = locationDataPref.getString("startLatitude", "null")
-        val startLot = locationDataPref.getString("startLongitude", "null")
-        val finishLat = locationDataPref.getString("finishLatitude", "null")
-        val finishLot = locationDataPref.getString("finishLongitude", "null")
-        val testStr = "startLat: $startLat, startLot: $startLot\nfinishLat: $finishLat, finishLot: $finishLot"
-
         Text(
             text = "送迎を終了しました",
             fontSize = 29.sp,
@@ -274,7 +262,11 @@ fun drivingEndedComposable(clickBack: ()->Unit) {
         Spacer(modifier = Modifier.padding(35.dp))
 
         Image(
-            bitmap = BarcodeEncoder().encodeBitmap(testStr, BarcodeFormat.QR_CODE, 275, 275).asImageBitmap(),
+            bitmap = APIConnerctor().generateFinishQR(
+                userId = "undefined",
+                startLat = locationDataPref.getString("startLatitude", "null").toString(), startLot = locationDataPref.getString("startLongitude", "null").toString(),
+                finishLat = locationDataPref.getString("finishLatitude", "null").toString(), finishLot = locationDataPref.getString("finishLongitude", "null").toString()
+            ),
             contentDescription = "qrCode",
             modifier = Modifier.size(width = 275.dp, height = 275.dp)
         )
