@@ -5,12 +5,16 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
@@ -21,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
@@ -29,10 +34,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.window.Dialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.res.ResourcesCompat
+import com.example.funhacks2022.ui.theme.DarkSecondaryColor
 import com.example.funhacks2022.ui.theme.FunHacks2022Theme
+import com.example.funhacks2022.ui.theme.LightSecondaryColor
+import com.example.funhacks2022.ui.theme.MPlusRoundedFontFamily
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.tasks.CancellationTokenSource
@@ -100,11 +110,14 @@ fun firstLandingComposable(
     var loginId by remember { mutableStateOf("") }
     val context = LocalContext.current
     Column(
-        modifier = Modifier.fillMaxSize().background(MaterialTheme.colors.background),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colors.background),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(text = "Welcome!", fontSize = 60.sp)
+        //Text(text = "Welcome!", fontSize = 60.sp)
+        Image(painterResource(if (isSystemInDarkTheme()) R.drawable.applogo_dark else R.drawable.applogo), contentDescription = "", modifier = Modifier.fillMaxWidth())
 
         Spacer(modifier = Modifier.padding(100.dp))
 
@@ -202,8 +215,8 @@ fun homeComposable() {
     if (dialogState == 1) {
         AlertDialog(
             onDismissRequest = { dialogState = 0 },
-            dismissButton = { TextButton(onClick = { dialogState = 0 }) { Text("いいえ") } },
-            confirmButton = { TextButton(onClick = { dialogState = 2 }) { Text(text = "はい") } },
+            dismissButton = { TextButton(onClick = { dialogState = 0 }) { Text("いいえ", color = if (isSystemInDarkTheme()) LightSecondaryColor else DarkSecondaryColor)  } },
+            confirmButton = { TextButton(onClick = { dialogState = 2 }) { Text(text = "はい", color = if (isSystemInDarkTheme()) LightSecondaryColor else DarkSecondaryColor) } },
             title = { Text(text = "送迎を開始しますか?") },
             text = { Text(text = "同乗者を乗せてから開始してください。\n出発点と到着点が同じ場合は、記録が無効となることに注意してください。") },
             modifier = Modifier
@@ -219,7 +232,13 @@ fun homeComposable() {
             properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false)
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth().background(color = MaterialTheme.colors.background, shape = RoundedCornerShape(5.dp)).size(height = 100.dp, width = 200.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        color = MaterialTheme.colors.background,
+                        shape = RoundedCornerShape(5.dp)
+                    )
+                    .size(height = 100.dp, width = 200.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
