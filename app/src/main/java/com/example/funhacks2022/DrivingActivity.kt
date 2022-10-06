@@ -270,7 +270,7 @@ fun drivingEndedComposable(clickBack: ()->Unit) {
         Spacer(modifier = Modifier.padding(15.dp))
 
         Image(
-            bitmap = APIConnerctor().generateFinishQR(
+            bitmap = generateFinishQR(
                 userId = "undefined",
                 startLat = locationDataPref.getString("startLatitude", "null").toString(), startLot = locationDataPref.getString("startLongitude", "null").toString(),
                 finishLat = locationDataPref.getString("finishLatitude", "null").toString(), finishLot = locationDataPref.getString("finishLongitude", "null").toString()

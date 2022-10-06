@@ -305,9 +305,16 @@ fun dataViewerComposable() {
         modifier = Modifier
             //.border(width = 2.dp, color = Color.DarkGray, shape = RoundedCornerShape(20.dp))
             .size(width = 300.dp, height = 450.dp)
+            .padding(25.dp)
     ) {
-        Text(text = "あああああ", fontSize = 50.sp, modifier = Modifier.padding(5.dp))
-        Spacer(modifier = Modifier.padding(75.dp))
-        Text(text = "あああああ", fontSize = 50.sp, modifier = Modifier.padding(5.dp))
+//        Text(text = "あああああ", fontSize = 50.sp, modifier = Modifier.padding(5.dp))
+//        Spacer(modifier = Modifier.padding(75.dp))
+//        Text(text = "あああああ", fontSize = 50.sp, modifier = Modifier.padding(5.dp))
+        Image(painterResource(R.drawable.emoji_100), contentDescription = "", modifier = Modifier.size(50.dp))
+        Image(painterResource(R.drawable.emoji_heart), contentDescription = "", modifier = Modifier.size(50.dp))
+        Image(painterResource(R.drawable.emoji_heartsmile), contentDescription = "", modifier = Modifier.size(50.dp))
+        Image(painterResource(R.drawable.emoji_party), contentDescription = "", modifier = Modifier.size(50.dp))
+        Image(painterResource(R.drawable.emoji_yummy), contentDescription = "", modifier = Modifier.size(50.dp))
+        Image(painterResource(R.drawable.emoji_smile), contentDescription = "", modifier = Modifier.size(50.dp))
     }
 }
