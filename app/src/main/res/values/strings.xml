@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">funHacks2022</string>
+    <string name="app_name">Depotify</string>
     <string name="title_activity_home">HomeActivity</string>
     <string name="title_activity_driving">DrivingActivity</string>
 

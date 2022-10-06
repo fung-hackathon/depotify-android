@@ -12,6 +12,8 @@ import androidx.compose.material.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.ExperimentalTextApi
+import androidx.compose.ui.text.googlefonts.GoogleFont
 import com.example.funhacks2022.ui.theme.FunHacks2022Theme
 
 class MainActivity : ComponentActivity() {
@@ -29,6 +31,8 @@ class MainActivity : ComponentActivity() {
 
                     val sharedPref = LocalContext.current.getSharedPreferences(stringResource(R.string.DRIVING_STATE), Context.MODE_PRIVATE)
                     var drivingState = -1
+
+
 
                     if (sharedPref == null) {
                         Log.d("Information", "Null")

@@ -12,6 +12,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
@@ -29,9 +30,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.example.funhacks2022.ui.theme.FunHacks2022Theme
-import com.example.funhacks2022.ui.theme.WarningColor
-import com.example.funhacks2022.ui.theme.WarningTextColor
+import com.example.funhacks2022.ui.theme.*
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.tasks.CancellationTokenSource
@@ -88,8 +87,8 @@ fun drivingMainComposable() {
         1 -> { //Finish Driving
             AlertDialog(
                 onDismissRequest = { dialogState = 0 },
-                dismissButton = { TextButton(onClick = { dialogState = 0 }) { Text(text = "いいえ") } },
-                confirmButton = { TextButton(onClick = { dialogState = 4 }) { Text(text = "はい") } },
+                dismissButton = { TextButton(onClick = { dialogState = 0 }) { Text(text = "いいえ", color = if (isSystemInDarkTheme()) LightSecondaryColor else DarkSecondaryColor) } },
+                confirmButton = { TextButton(onClick = { dialogState = 4 }) { Text(text = "はい", color = if (isSystemInDarkTheme()) LightSecondaryColor else DarkSecondaryColor) } },
                 title = { Text(text = "送迎を終了しますか?") },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -102,7 +101,7 @@ fun drivingMainComposable() {
         2 -> { //Cancel Driving
             AlertDialog(
                 onDismissRequest = { dialogState = 0 },
-                dismissButton = { TextButton(onClick = { dialogState = 0 }) { Text(text = "いいえ") } },
+                dismissButton = { TextButton(onClick = { dialogState = 0 }) { Text(text = "いいえ", color = if (isSystemInDarkTheme()) LightSecondaryColor else DarkSecondaryColor) } },
                 confirmButton = {
                     TextButton(onClick = {
                         dialogState = 0
@@ -117,7 +116,7 @@ fun drivingMainComposable() {
                         thisContext.startActivity(Intent(thisContext, HomeActivity::class.java))
                         (thisContext as Activity).finish()
                     }) {
-                        Text(text = "はい")
+                        Text(text = "はい", color = if (isSystemInDarkTheme()) LightSecondaryColor else DarkSecondaryColor)
                     }
                 },
                 title = { Text(text = "送迎を中止(キャンセル)しますか?") },
@@ -132,7 +131,7 @@ fun drivingMainComposable() {
         3 -> { //Return to home after the driving finished
             AlertDialog(
                 onDismissRequest = { dialogState = 0 },
-                dismissButton = { TextButton(onClick = { dialogState = 0 }) { Text(text = "いいえ") } },
+                dismissButton = { TextButton(onClick = { dialogState = 0 }) { Text(text = "いいえ", color = if (isSystemInDarkTheme()) LightSecondaryColor else DarkSecondaryColor) } },
                 confirmButton = {
                     TextButton(onClick = {
                         dialogState = 0
@@ -147,7 +146,7 @@ fun drivingMainComposable() {
                         thisContext.startActivity(Intent(thisContext, HomeActivity::class.java))
                         (thisContext as Activity).finish()
                     }) {
-                        Text(text = "はい")
+                        Text(text = "はい", color = if (isSystemInDarkTheme()) LightSecondaryColor else DarkSecondaryColor)
                     }
                 },
                 text = { Text(text = "QRコードは再発行できません。\nご注意ください。") },
@@ -216,6 +215,10 @@ fun drivingComposable(clickFinish: ()->Unit, clickCancel: ()->Unit) {
     ) {
         Text("送迎中です", fontSize = 50.sp)
 
+        Spacer(modifier = Modifier.padding(5.dp))
+
+        Text("この状態で別のアプリを起動することもできます。\n目的地で、「送迎を終了」を押してください。", textAlign = TextAlign.Center, fontSize = 15.sp)
+
         Spacer(modifier = Modifier.padding(100.dp))
 
         Button(
@@ -232,7 +235,7 @@ fun drivingComposable(clickFinish: ()->Unit, clickCancel: ()->Unit) {
             onClick = clickCancel,
             modifier = Modifier.size(width = 275.dp, height = 50.dp),
             shape = RoundedCornerShape(50.dp),
-            colors = ButtonDefaults.buttonColors(contentColor = MaterialTheme.typography.body1.color, backgroundColor = WarningColor)
+            colors = ButtonDefaults.buttonColors(contentColor = MaterialTheme.typography.body1.color, backgroundColor = midGray)
         ) {
             Text(text = "送迎を中止", color = WarningTextColor, fontSize = 16.sp)
         }
@@ -250,21 +253,21 @@ fun drivingEndedComposable(clickBack: ()->Unit) {
         horizontalAlignment = Alignment.CenterHorizontally
     ){
         Text(
-            text = "送迎を終了しました",
-            fontSize = 29.sp,
+            text = "終了しました",
+            fontSize = 50.sp,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.size(width = 275.dp, height = 50.dp),
+            modifier = Modifier.size(width = 350.dp, height = 75.dp),
             textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.padding(5.dp))
         Text(
-            text = "表示されているQRコードを\n読み取ってもらってください",
+            text = "運転お疲れ様でした！\n\n表示されているQRコードを\n読み取ってもらってください",
             fontSize = 15.sp,
-            modifier = Modifier.size(width = 240.dp, height = 50.dp),
+            modifier = Modifier.size(width = 240.dp, height = 80.dp),
             textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.padding(35.dp))
+        Spacer(modifier = Modifier.padding(15.dp))
 
         Image(
             bitmap = APIConnerctor().generateFinishQR(
@@ -276,7 +279,7 @@ fun drivingEndedComposable(clickBack: ()->Unit) {
             modifier = Modifier.size(width = 275.dp, height = 275.dp)
         )
 
-        Spacer(modifier = Modifier.padding(50.dp))
+        Spacer(modifier = Modifier.padding(30.dp))
 
         Button(
             onClick = clickBack,
