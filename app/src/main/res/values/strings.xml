@@ -6,4 +6,5 @@
     <string name="DRIVING_STATE">funhacks2022DrivingState</string>
     <string name="ARRIVE_STATE">funhacks2022ArriveState</string>
     <string name="LOCATION_DATA">funhacks2022LocationData</string>
+    <string name="USERID_DATA">funhacks2022UserIdData</string>
 </resources>

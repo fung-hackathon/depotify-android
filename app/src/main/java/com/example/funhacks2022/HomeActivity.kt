@@ -16,6 +16,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.KeyboardOptions
@@ -35,10 +37,13 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.window.Dialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.funhacks2022.ui.theme.DarkSecondaryColor
 import com.example.funhacks2022.ui.theme.FunHacks2022Theme
 import com.example.funhacks2022.ui.theme.LightSecondaryColor
@@ -59,7 +64,7 @@ class HomeActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colors.background
                 ) {
-                    homeRootComposable()
+                    homeRootComposable(UserIdViewModel(LocalContext.current))
                 }
             }
         }
@@ -67,34 +72,32 @@ class HomeActivity : ComponentActivity() {
 }
 
 @Composable
-fun homeRootComposable(){
+fun homeRootComposable(useridViewModel: UserIdViewModel){
     val aStatePref = LocalContext.current.getSharedPreferences(stringResource(R.string.ARRIVE_STATE), Context.MODE_PRIVATE)
+    val uidPref = LocalContext.current.getSharedPreferences(stringResource(R.string.USERID_DATA), Context.MODE_PRIVATE)
 
     var isFirstLanding by remember { mutableStateOf(aStatePref.getBoolean("isFirstLanding", true)) }
+    var currentUId by remember { mutableStateOf(uidPref.getString("UserId", "undefined")) }
+
     if (isFirstLanding) {
         firstLandingComposable(
             newUserClick = {
-                /*TODO:
-                   process written below should separated to other space since communication with API must be async
-                */
-
+                useridViewModel.createUser(){
+                    isFirstLanding = false
+                    with(aStatePref.edit()){
+                        putBoolean("isFirstLanding", false)
+                        apply()
+                    }
+                }
+            },
+            onLoginSuccess = {
                 isFirstLanding = false
                 with(aStatePref.edit()){
                     putBoolean("isFirstLanding", false)
                     apply()
                 }
             },
-            loginClick = {
-                /*TODO:
-                   process written below should separated to other space since communication with API must be async
-                */
-
-                isFirstLanding = false
-                with(aStatePref.edit()){
-                    putBoolean("isFirstLanding", false)
-                    apply()
-                }
-            }
+            UserIdViewModel(LocalContext.current)
         )
     }
     else {
@@ -105,7 +108,8 @@ fun homeRootComposable(){
 @Composable
 fun firstLandingComposable(
     newUserClick: ()->Unit,
-    loginClick: ()->Unit,
+    onLoginSuccess: ()->Unit,
+    useridViewModel: UserIdViewModel
 ) {
     var loginId by remember { mutableStateOf("") }
     val context = LocalContext.current
@@ -149,12 +153,13 @@ fun firstLandingComposable(
         Spacer(modifier = Modifier.padding(5.dp))
         Button(
             onClick = {
-                if (loginValidator(loginId)) {
-                    loginClick()
-                }
-                else {
-                    Toast.makeText(context, "不正な引き継ぎコードです。\n再度、確認してください。", Toast.LENGTH_LONG).show()
-                }
+                useridViewModel.loginWithId(
+                    requestId = loginId,
+                    onComplete = onLoginSuccess,
+                    onError = {
+                        Toast.makeText(context, "不正な引き継ぎコードです。\n再度、確認してください。", Toast.LENGTH_LONG).show()
+                    }
+                )
             },
             modifier = Modifier.size(width = 275.dp, height = 55.dp),
             shape = RoundedCornerShape(50.dp)
@@ -162,11 +167,6 @@ fun firstLandingComposable(
             Text("データを引き継ぎ", fontSize = 16.sp)
         }
     }
-}
-
-fun loginValidator(loginId: String): Boolean{
-    /*TODO*/
-    return false
 }
 
 @Composable
@@ -198,7 +198,9 @@ fun homeComposable() {
         userIdComposable()
 
         Spacer(modifier = Modifier.padding(5.dp))
-        Surface(elevation = 10.dp, shape = RoundedCornerShape(20.dp)) { dataViewerComposable() }
+        Surface(elevation = 10.dp, shape = RoundedCornerShape(20.dp)) { dataViewerComposable(
+            UserDataViewModel()
+        ) }
         Spacer(modifier = Modifier.padding(25.dp))
 
         Surface(elevation = 10.dp, shape = RoundedCornerShape(50.dp)) {
@@ -278,12 +280,15 @@ fun homeComposable() {
 
 @Composable
 fun userIdComposable() {
-    val userId = "undefined"
+    val uidPref = LocalContext.current.getSharedPreferences(stringResource(R.string.USERID_DATA), Context.MODE_PRIVATE)
+    val userId = uidPref.getString("UserId", "undefined").toString()
     var showId by remember { mutableStateOf(false) }
+
+    //Get user's cumulative score and recent emoticons(n = 30)
 
     if (!showId){
         ClickableText(
-            text = AnnotatedString("引き継ぎコード: ここをタップして表示"),
+            text = AnnotatedString("引き継ぎコードはここをタップして表示"),
             style = TextStyle( fontSize = 13.sp , color = MaterialTheme.typography.body1.color ),
             modifier = Modifier.size(width = 300.dp, height = 18.dp),
             onClick = { showId = true }
@@ -291,16 +296,17 @@ fun userIdComposable() {
     }
     else {
         Text(
-            text = "引き継ぎコード: $userId",
+            text = uidPref.getString("UserId", "undefined").toString(),
             fontSize = 13.sp,
             modifier = Modifier.size(width = 300.dp, height = 18.dp),
-            color = MaterialTheme.typography.body1.color
+            textAlign = TextAlign.Left
         )
     }
 }
 
 @Composable
-fun dataViewerComposable() {
+fun dataViewerComposable(vm: UserDataViewModel) {
+    val uidPref = LocalContext.current.getSharedPreferences(stringResource(R.string.USERID_DATA), Context.MODE_PRIVATE)
     Column(
         modifier = Modifier
             //.border(width = 2.dp, color = Color.DarkGray, shape = RoundedCornerShape(20.dp))
@@ -317,4 +323,42 @@ fun dataViewerComposable() {
         Image(painterResource(R.drawable.emoji_yummy), contentDescription = "", modifier = Modifier.size(50.dp))
         Image(painterResource(R.drawable.emoji_smile), contentDescription = "", modifier = Modifier.size(50.dp))
     }
+
+//    if (vm.errorMessage.isEmpty()){
+//        Column(
+//            modifier = Modifier
+//                .size(width = 300.dp, height = 450.dp)
+//                .padding(25.dp)
+//        ){
+//            LazyColumn(modifier = Modifier.size(width = 300.dp, height = 450.dp)) {
+//                items(vm.todoList) { todo ->
+//                    Column {
+//                        Row (
+//                            modifier = Modifier
+//                                .fillMaxWidth()
+//                                .padding(16.dp),
+//                            horizontalArrangement = Arrangement.Center
+//                        ){
+//                            Box (modifier = Modifier
+//                                .fillMaxWidth()
+//                                .padding(0.dp, 0.dp, 16.dp, 0.dp)) {
+//                                Text(
+//                                    todo.title,
+//                                    maxLines = 1,
+//                                    overflow = TextOverflow.Ellipsis
+//                                )
+//                            }
+//                            Spacer(modifier = Modifier.width(16.dp))
+//                            Checkbox(checked = todo.compleated, onCheckedChange = null)
+//                        }
+//                        Divider()
+//                    }
+//                }
+//            }
+//        }
+//    }
+//    else {
+//        Text(vm.errorMessage)
+//    }
 }
+
