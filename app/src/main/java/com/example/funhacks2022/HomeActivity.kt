@@ -8,9 +8,11 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
+import android.service.autofill.UserData
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.appcompat.widget.EmojiCompatConfigurationView
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -74,10 +76,7 @@ class HomeActivity : ComponentActivity() {
 @Composable
 fun homeRootComposable(useridViewModel: UserIdViewModel){
     val aStatePref = LocalContext.current.getSharedPreferences(stringResource(R.string.ARRIVE_STATE), Context.MODE_PRIVATE)
-    val uidPref = LocalContext.current.getSharedPreferences(stringResource(R.string.USERID_DATA), Context.MODE_PRIVATE)
-
     var isFirstLanding by remember { mutableStateOf(aStatePref.getBoolean("isFirstLanding", true)) }
-    var currentUId by remember { mutableStateOf(uidPref.getString("UserId", "undefined")) }
 
     if (isFirstLanding) {
         firstLandingComposable(
@@ -120,7 +119,6 @@ fun firstLandingComposable(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        //Text(text = "Welcome!", fontSize = 60.sp)
         Image(painterResource(if (isSystemInDarkTheme()) R.drawable.applogo_dark else R.drawable.applogo), contentDescription = "", modifier = Modifier.fillMaxWidth())
 
         Spacer(modifier = Modifier.padding(100.dp))
@@ -198,9 +196,7 @@ fun homeComposable() {
         userIdComposable()
 
         Spacer(modifier = Modifier.padding(5.dp))
-        Surface(elevation = 10.dp, shape = RoundedCornerShape(20.dp)) { dataViewerComposable(
-            UserDataViewModel()
-        ) }
+        Surface(elevation = 10.dp, shape = RoundedCornerShape(20.dp)) { dataViewerComposable(UserDataViewModel(thisContext)) }
         Spacer(modifier = Modifier.padding(25.dp))
 
         Surface(elevation = 10.dp, shape = RoundedCornerShape(50.dp)) {
@@ -281,10 +277,7 @@ fun homeComposable() {
 @Composable
 fun userIdComposable() {
     val uidPref = LocalContext.current.getSharedPreferences(stringResource(R.string.USERID_DATA), Context.MODE_PRIVATE)
-    val userId = uidPref.getString("UserId", "undefined").toString()
     var showId by remember { mutableStateOf(false) }
-
-    //Get user's cumulative score and recent emoticons(n = 30)
 
     if (!showId){
         ClickableText(
@@ -306,22 +299,43 @@ fun userIdComposable() {
 
 @Composable
 fun dataViewerComposable(vm: UserDataViewModel) {
+    //Get user's cumulative score and recent emoticons(n = 30)
     val uidPref = LocalContext.current.getSharedPreferences(stringResource(R.string.USERID_DATA), Context.MODE_PRIVATE)
+    var readyScore by remember { mutableStateOf(false) }
+
+    vm.getCumulativeScore(
+        userId = uidPref.getString("UserId", "undefined").toString(),
+        onSuccess = {
+            readyScore = true
+        }
+    )
+
     Column(
         modifier = Modifier
             //.border(width = 2.dp, color = Color.DarkGray, shape = RoundedCornerShape(20.dp))
             .size(width = 300.dp, height = 450.dp)
             .padding(25.dp)
     ) {
-//        Text(text = "あああああ", fontSize = 50.sp, modifier = Modifier.padding(5.dp))
-//        Spacer(modifier = Modifier.padding(75.dp))
-//        Text(text = "あああああ", fontSize = 50.sp, modifier = Modifier.padding(5.dp))
-        Image(painterResource(R.drawable.emoji_100), contentDescription = "", modifier = Modifier.size(50.dp))
-        Image(painterResource(R.drawable.emoji_heart), contentDescription = "", modifier = Modifier.size(50.dp))
-        Image(painterResource(R.drawable.emoji_heartsmile), contentDescription = "", modifier = Modifier.size(50.dp))
-        Image(painterResource(R.drawable.emoji_party), contentDescription = "", modifier = Modifier.size(50.dp))
-        Image(painterResource(R.drawable.emoji_yummy), contentDescription = "", modifier = Modifier.size(50.dp))
-        Image(painterResource(R.drawable.emoji_smile), contentDescription = "", modifier = Modifier.size(50.dp))
+        Text("累計スコア:", fontSize = 30.sp, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.padding(5.dp))
+        Row (modifier = Modifier.width(300.dp), horizontalArrangement = Arrangement.End){
+            if (DEMOMODE){
+                Text("135 pts", fontSize = 40.sp)
+            }
+            else {
+                if (!readyScore) Text("Loading...", fontSize = 40.sp)
+                else Text("${vm.currentScore} pts", fontSize = 40.sp)
+            }
+        }
+
+        Spacer(Modifier.padding(5.dp))
+        Divider()
+        Spacer(Modifier.padding(5.dp))
+
+        Text("もらった絵文字", fontSize = 30.sp, fontWeight = FontWeight.Bold)
+        Text("直近16件を表示しています", fontSize = 12.sp)
+
+        EmojiComposable()
     }
 
 //    if (vm.errorMessage.isEmpty()){
@@ -362,3 +376,28 @@ fun dataViewerComposable(vm: UserDataViewModel) {
 //    }
 }
 
+@Composable
+fun EmojiComposable() {
+    if (DEMOMODE){
+        Column(Modifier.size(width = 300.dp, height = 220.dp)) {
+            Row(Modifier.width(300.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                Image(painterResource(R.drawable.emoji_100), contentDescription = "", modifier = Modifier.size(50.dp))
+                Image(painterResource(R.drawable.emoji_heart), contentDescription = "", modifier = Modifier.size(50.dp))
+                Image(painterResource(R.drawable.emoji_heartsmile), contentDescription = "", modifier = Modifier.size(50.dp))
+                Image(painterResource(R.drawable.emoji_party), contentDescription = "", modifier = Modifier.size(50.dp))
+            }
+            Spacer(Modifier.padding(5.dp))
+            Row(Modifier.width(300.dp)){
+                Image(painterResource(id = R.drawable.emoji_heart), contentDescription = "", modifier = Modifier.size(50.dp))
+
+            }
+        }
+        //Image(painterResource(R.drawable.emoji_yummy), contentDescription = "", modifier = Modifier.size(50.dp))
+        //Image(painterResource(R.drawable.emoji_smile), contentDescription = "", modifier = Modifier.size(50.dp))
+    }
+    else {
+        Column(Modifier.size(width=300.dp, height=220.dp)){
+            /* TODO */
+        }
+    }
+}

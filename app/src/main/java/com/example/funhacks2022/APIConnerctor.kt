@@ -20,26 +20,55 @@ import retrofit2.http.Query
 
 val APIBASEURL = "https://depotify.onrender.com"
 
-class UserDataViewModel: ViewModel() {
-    private val _todoList = mutableStateListOf<ToDo>()
-    var errorMessage: String by mutableStateOf("")
-    val todoList: List<ToDo>
-        get() = _todoList
+//class UserDataViewModel: ViewModel() {
+//    private val _todoList = mutableStateListOf<ToDo>()
+//    var errorMessage: String by mutableStateOf("")
+//    val todoList: List<ToDo>
+//        get() = _todoList
+//
+//    fun getTodoList() {
+//        viewModelScope.launch {
+//            val apiService = DepotifyAPI.Instance()
+//            try {
+//                _todoList.clear()
+//                _todoList.addAll(apiService.getTodos())
+//
+//            } catch (e: Exception) {
+//                errorMessage = e.message.toString()
+//            }
+//        }
+//    }
+//}
 
-    fun getTodoList() {
+class UserDataViewModel(originContext: Context): ViewModel() {
+    val udPref = originContext.getSharedPreferences(originContext.getString(R.string.USERID_DATA), Context.MODE_PRIVATE)
+
+    var currentScore by mutableStateOf(udPref.getString("UserScore", "0").toString().toInt())
+    var errorMessage: String by mutableStateOf("")
+
+    fun getCumulativeScore(userId: String, onSuccess: ()->Unit) {
         viewModelScope.launch {
             val apiService = DepotifyAPI.Instance()
             try {
-                _todoList.clear()
-                _todoList.addAll(apiService.getTodos())
+                val newScore = apiService.getUserScore(userId).score
 
+                if (currentScore != newScore) {
+                    currentScore = newScore
+                    with(udPref.edit()) {
+                        putString("UserScore", currentScore.toString())
+                        apply()
+                    }
+                }
+
+                Log.d("API SUCCESS", "currentScore updated")
+                onSuccess()
             } catch (e: Exception) {
                 errorMessage = e.message.toString()
+                Log.d("APIERROR", errorMessage)
             }
         }
     }
 }
-
 
 class UserIdViewModel(originContext: Context): ViewModel() {
     val uidPref = originContext.getSharedPreferences(originContext.getString(R.string.USERID_DATA), Context.MODE_PRIVATE)
@@ -97,7 +126,9 @@ interface DepotifyAPI {
     suspend fun createUser(): UserId
 
     @GET("/score")
-    suspend fun getUserData(): Score
+    suspend fun getUserScore(
+        @Query("userId") userId: String
+    ): Score
 
     @GET("/emotion")
     suspend fun getEmojiData(): Emojies
@@ -107,8 +138,8 @@ interface DepotifyAPI {
         @Query("userId") userId: String
     ): Score
 
-    @GET("/todos")
-    suspend fun getTodos(): List<ToDo>
+//    @GET("/todos")
+//    suspend fun getTodos(): List<ToDo>
 
     companion object {
         var depotifyAPI: DepotifyAPI? = null
@@ -131,12 +162,12 @@ fun generateFinishQR(
     return BarcodeEncoder().encodeBitmap(targetUrl, BarcodeFormat.QR_CODE, 275, 275).asImageBitmap()
 }
 
-data class ToDo(
-    var userId: Int,
-    var id: Int,
-    var title: String,
-    var compleated: Boolean
-)
+//data class ToDo(
+//    var userId: Int,
+//    var id: Int,
+//    var title: String,
+//    var compleated: Boolean
+//)
 
 data class Emojies(
     val userid: String,

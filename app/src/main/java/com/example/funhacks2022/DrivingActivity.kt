@@ -39,7 +39,6 @@ class DrivingActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            /*TODO: Create Theme*/
             FunHacks2022Theme {
                 // A surface container using the 'background' color from the theme
                 Surface(
@@ -246,6 +245,8 @@ fun drivingComposable(clickFinish: ()->Unit, clickCancel: ()->Unit) {
 fun drivingEndedComposable(clickBack: ()->Unit) {
     val thisContext = LocalContext.current
     val locationDataPref = thisContext.getSharedPreferences(stringResource(R.string.LOCATION_DATA), Context.MODE_PRIVATE)
+    val uidPref = thisContext.getSharedPreferences(stringResource(R.string.USERID_DATA), Context.MODE_PRIVATE)
+    val userId = uidPref.getString("UserId", "undefined").toString()
 
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -269,9 +270,11 @@ fun drivingEndedComposable(clickBack: ()->Unit) {
 
         Spacer(modifier = Modifier.padding(15.dp))
 
+        Log.d("QR generating", "UserId: $userId")
+
         Image(
             bitmap = generateFinishQR(
-                userId = "undefined",
+                userId = userId,
                 startLat = locationDataPref.getString("startLatitude", "null").toString(), startLot = locationDataPref.getString("startLongitude", "null").toString(),
                 finishLat = locationDataPref.getString("finishLatitude", "null").toString(), finishLot = locationDataPref.getString("finishLongitude", "null").toString()
             ),
