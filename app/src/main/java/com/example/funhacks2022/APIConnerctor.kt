@@ -9,6 +9,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.zxing.BarcodeFormat
 import com.journeyapps.barcodescanner.BarcodeEncoder
 import kotlinx.coroutines.launch
@@ -20,37 +21,23 @@ import retrofit2.http.Query
 
 val APIBASEURL = "https://depotify.onrender.com"
 
-//class UserDataViewModel: ViewModel() {
-//    private val _todoList = mutableStateListOf<ToDo>()
-//    var errorMessage: String by mutableStateOf("")
-//    val todoList: List<ToDo>
-//        get() = _todoList
-//
-//    fun getTodoList() {
-//        viewModelScope.launch {
-//            val apiService = DepotifyAPI.Instance()
-//            try {
-//                _todoList.clear()
-//                _todoList.addAll(apiService.getTodos())
-//
-//            } catch (e: Exception) {
-//                errorMessage = e.message.toString()
-//            }
-//        }
-//    }
-//}
-
 class UserDataViewModel(originContext: Context): ViewModel() {
     val udPref = originContext.getSharedPreferences(originContext.getString(R.string.USERID_DATA), Context.MODE_PRIVATE)
 
     var currentScore by mutableStateOf(udPref.getString("UserScore", "0").toString().toInt())
     var errorMessage: String by mutableStateOf("")
 
+    private val _emojies = mutableStateListOf<String>()
+    val emojies: List<String>
+        get() = _emojies
+
     fun getCumulativeScore(userId: String, onSuccess: ()->Unit) {
         viewModelScope.launch {
             val apiService = DepotifyAPI.Instance()
             try {
                 val newScore = apiService.getUserScore(userId).score
+
+                Log.d("CurrentScore", newScore.toString())
 
                 if (currentScore != newScore) {
                     currentScore = newScore
@@ -65,6 +52,25 @@ class UserDataViewModel(originContext: Context): ViewModel() {
             } catch (e: Exception) {
                 errorMessage = e.message.toString()
                 Log.d("APIERROR", errorMessage)
+            }
+        }
+    }
+
+    fun getReceivedEmojies(userId: String, onSuccess: ()->Unit) {
+        viewModelScope.launch {
+            val apiService = DepotifyAPI.Instance()
+            try {
+                _emojies.clear()
+                _emojies.addAll(apiService.getEmojiData(userId).emotion.toMutableStateList())
+                //_emojies.addAll(listOf("100", "yum", "100", "100", "100", "yum", "100", "100","100", "yum", "100", "100","100", "yum", "100", "100","100", "yum", "yum"))
+
+                if (_emojies.size > 16) {
+                    _emojies.removeRange(16, _emojies.size)
+                }
+
+                onSuccess()
+            } catch (e: Exception) {
+                errorMessage = e.toString()
             }
         }
     }
@@ -127,19 +133,18 @@ interface DepotifyAPI {
 
     @GET("/score")
     suspend fun getUserScore(
-        @Query("userId") userId: String
+        @Query("userid") userId: String
     ): Score
 
     @GET("/emotion")
-    suspend fun getEmojiData(): Emojies
+    suspend fun getEmojiData(
+        @Query("userid") userId: String
+    ): Emojies
 
     @GET("/score")
     suspend fun checkUserExist(
-        @Query("userId") userId: String
+        @Query("userid") userId: String
     ): Score
-
-//    @GET("/todos")
-//    suspend fun getTodos(): List<ToDo>
 
     companion object {
         var depotifyAPI: DepotifyAPI? = null
@@ -158,16 +163,18 @@ interface DepotifyAPI {
 fun generateFinishQR(
     userId: String, startLat: String, startLot: String, finishLat: String, finishLot: String
 ): ImageBitmap {
-    val targetUrl = "$APIBASEURL/arrive?userId=$userId?olat=$startLat?olng=$startLot?dlat=$finishLat?dlng=$finishLot"
+    val targetUrl = "$APIBASEURL/arrive?userid=$userId&olat=$startLat&olng=$startLot&dlat=$finishLat&dlng=$finishLot"
     return BarcodeEncoder().encodeBitmap(targetUrl, BarcodeFormat.QR_CODE, 275, 275).asImageBitmap()
 }
 
-//data class ToDo(
-//    var userId: Int,
-//    var id: Int,
-//    var title: String,
-//    var compleated: Boolean
-//)
+val ConvEmojiIdToRid = mapOf(
+    "100" to R.drawable.emoji_100,
+    "heart" to R.drawable.emoji_heart,
+    "blush" to R.drawable.emoji_smile,
+    "smiling_face_with_3_hearts" to R.drawable.emoji_heartsmile,
+    "yum" to R.drawable.emoji_yummy,
+    "partying_face" to R.drawable.emoji_party
+)
 
 data class Emojies(
     val userid: String,
@@ -181,13 +188,4 @@ data class UserId(
 data class Score(
     val userid: String,
     val score: Int
-)
-
-data class ApiError(
-    val code: Int,
-    val description: String
-)
-
-data class ApiHealth(
-    val message: String
 )

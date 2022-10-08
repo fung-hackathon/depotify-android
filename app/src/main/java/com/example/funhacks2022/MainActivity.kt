@@ -16,7 +16,7 @@ import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.googlefonts.GoogleFont
 import com.example.funhacks2022.ui.theme.FunHacks2022Theme
 
-val DEMOMODE = true
+val DEMOMODE = false
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

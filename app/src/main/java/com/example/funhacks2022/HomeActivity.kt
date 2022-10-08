@@ -5,20 +5,14 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
-import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
-import android.service.autofill.UserData
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.appcompat.widget.EmojiCompatConfigurationView
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.GridCells
+import androidx.compose.foundation.lazy.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
@@ -27,7 +21,6 @@ import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
@@ -43,20 +36,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.window.Dialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.content.res.ResourcesCompat
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.example.funhacks2022.ui.theme.DarkSecondaryColor
 import com.example.funhacks2022.ui.theme.FunHacks2022Theme
 import com.example.funhacks2022.ui.theme.LightSecondaryColor
-import com.example.funhacks2022.ui.theme.MPlusRoundedFontFamily
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.tasks.CancellationTokenSource
 
 class HomeActivity : ComponentActivity() {
-    /*TODO: Create Theme*/
-    /*TODO: Get "isFirstLanding" from AppStorage*/
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -335,49 +322,17 @@ fun dataViewerComposable(vm: UserDataViewModel) {
         Text("もらった絵文字", fontSize = 30.sp, fontWeight = FontWeight.Bold)
         Text("直近16件を表示しています", fontSize = 12.sp)
 
-        EmojiComposable()
+        EmojiComposable(UserDataViewModel(LocalContext.current), uidPref.getString("UserId", "undefined").toString())
     }
-
-//    if (vm.errorMessage.isEmpty()){
-//        Column(
-//            modifier = Modifier
-//                .size(width = 300.dp, height = 450.dp)
-//                .padding(25.dp)
-//        ){
-//            LazyColumn(modifier = Modifier.size(width = 300.dp, height = 450.dp)) {
-//                items(vm.todoList) { todo ->
-//                    Column {
-//                        Row (
-//                            modifier = Modifier
-//                                .fillMaxWidth()
-//                                .padding(16.dp),
-//                            horizontalArrangement = Arrangement.Center
-//                        ){
-//                            Box (modifier = Modifier
-//                                .fillMaxWidth()
-//                                .padding(0.dp, 0.dp, 16.dp, 0.dp)) {
-//                                Text(
-//                                    todo.title,
-//                                    maxLines = 1,
-//                                    overflow = TextOverflow.Ellipsis
-//                                )
-//                            }
-//                            Spacer(modifier = Modifier.width(16.dp))
-//                            Checkbox(checked = todo.compleated, onCheckedChange = null)
-//                        }
-//                        Divider()
-//                    }
-//                }
-//            }
-//        }
-//    }
-//    else {
-//        Text(vm.errorMessage)
-//    }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun EmojiComposable() {
+fun EmojiComposable(vm: UserDataViewModel, userId: String) {
+    var readyEmoji by remember { mutableStateOf(false) }
+
+    vm.getReceivedEmojies(userId, { readyEmoji = true })
+
     if (DEMOMODE){
         Column(Modifier.size(width = 300.dp, height = 220.dp)) {
             Row(Modifier.width(300.dp), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -392,12 +347,34 @@ fun EmojiComposable() {
 
             }
         }
-        //Image(painterResource(R.drawable.emoji_yummy), contentDescription = "", modifier = Modifier.size(50.dp))
-        //Image(painterResource(R.drawable.emoji_smile), contentDescription = "", modifier = Modifier.size(50.dp))
     }
     else {
         Column(Modifier.size(width=300.dp, height=220.dp)){
             /* TODO */
+            if (vm.errorMessage.isEmpty() && readyEmoji) {
+                LazyVerticalGrid(
+                    cells = GridCells.Fixed(4),
+                    modifier = Modifier.size(width = 300.dp, height = 220.dp),
+                    content = {
+                        items(vm.emojies) { emojiId ->
+                            Image(
+                                painterResource(
+                                    ConvEmojiIdToRid.getOrDefault(
+                                        emojiId,
+                                        R.drawable.blank,
+                                    ),
+                                ),
+                                contentDescription = null,
+                                modifier = Modifier.size(50.dp),
+                            )
+                        }
+                    },
+                    verticalArrangement = Arrangement.SpaceAround
+                )
+            }
+            else {
+                Text(vm.errorMessage, overflow = TextOverflow.Ellipsis)
+            }
         }
     }
 }
