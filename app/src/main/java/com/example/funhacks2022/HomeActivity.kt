@@ -5,17 +5,15 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
-import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.GridCells
+import androidx.compose.foundation.lazy.LazyVerticalGrid
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.KeyboardOptions
@@ -23,7 +21,6 @@ import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
@@ -35,21 +32,18 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.window.Dialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.content.res.ResourcesCompat
 import com.example.funhacks2022.ui.theme.DarkSecondaryColor
 import com.example.funhacks2022.ui.theme.FunHacks2022Theme
 import com.example.funhacks2022.ui.theme.LightSecondaryColor
-import com.example.funhacks2022.ui.theme.MPlusRoundedFontFamily
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.tasks.CancellationTokenSource
 
 class HomeActivity : ComponentActivity() {
-    /*TODO: Create Theme*/
-    /*TODO: Get "isFirstLanding" from AppStorage*/
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -59,7 +53,7 @@ class HomeActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colors.background
                 ) {
-                    homeRootComposable()
+                    homeRootComposable(UserIdViewModel(LocalContext.current))
                 }
             }
         }
@@ -67,34 +61,29 @@ class HomeActivity : ComponentActivity() {
 }
 
 @Composable
-fun homeRootComposable(){
+fun homeRootComposable(useridViewModel: UserIdViewModel){
     val aStatePref = LocalContext.current.getSharedPreferences(stringResource(R.string.ARRIVE_STATE), Context.MODE_PRIVATE)
-
     var isFirstLanding by remember { mutableStateOf(aStatePref.getBoolean("isFirstLanding", true)) }
+
     if (isFirstLanding) {
         firstLandingComposable(
             newUserClick = {
-                /*TODO:
-                   process written below should separated to other space since communication with API must be async
-                */
-
+                useridViewModel.createUser(){
+                    isFirstLanding = false
+                    with(aStatePref.edit()){
+                        putBoolean("isFirstLanding", false)
+                        apply()
+                    }
+                }
+            },
+            onLoginSuccess = {
                 isFirstLanding = false
                 with(aStatePref.edit()){
                     putBoolean("isFirstLanding", false)
                     apply()
                 }
             },
-            loginClick = {
-                /*TODO:
-                   process written below should separated to other space since communication with API must be async
-                */
-
-                isFirstLanding = false
-                with(aStatePref.edit()){
-                    putBoolean("isFirstLanding", false)
-                    apply()
-                }
-            }
+            UserIdViewModel(LocalContext.current)
         )
     }
     else {
@@ -105,7 +94,8 @@ fun homeRootComposable(){
 @Composable
 fun firstLandingComposable(
     newUserClick: ()->Unit,
-    loginClick: ()->Unit,
+    onLoginSuccess: ()->Unit,
+    useridViewModel: UserIdViewModel
 ) {
     var loginId by remember { mutableStateOf("") }
     val context = LocalContext.current
@@ -116,7 +106,6 @@ fun firstLandingComposable(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        //Text(text = "Welcome!", fontSize = 60.sp)
         Image(painterResource(if (isSystemInDarkTheme()) R.drawable.applogo_dark else R.drawable.applogo), contentDescription = "", modifier = Modifier.fillMaxWidth())
 
         Spacer(modifier = Modifier.padding(100.dp))
@@ -149,12 +138,13 @@ fun firstLandingComposable(
         Spacer(modifier = Modifier.padding(5.dp))
         Button(
             onClick = {
-                if (loginValidator(loginId)) {
-                    loginClick()
-                }
-                else {
-                    Toast.makeText(context, "不正な引き継ぎコードです。\n再度、確認してください。", Toast.LENGTH_LONG).show()
-                }
+                useridViewModel.loginWithId(
+                    requestId = loginId,
+                    onComplete = onLoginSuccess,
+                    onError = {
+                        Toast.makeText(context, "不正な引き継ぎコードです。\n再度、確認してください。", Toast.LENGTH_LONG).show()
+                    }
+                )
             },
             modifier = Modifier.size(width = 275.dp, height = 55.dp),
             shape = RoundedCornerShape(50.dp)
@@ -162,11 +152,6 @@ fun firstLandingComposable(
             Text("データを引き継ぎ", fontSize = 16.sp)
         }
     }
-}
-
-fun loginValidator(loginId: String): Boolean{
-    /*TODO*/
-    return false
 }
 
 @Composable
@@ -198,7 +183,7 @@ fun homeComposable() {
         userIdComposable()
 
         Spacer(modifier = Modifier.padding(5.dp))
-        Surface(elevation = 10.dp, shape = RoundedCornerShape(20.dp)) { dataViewerComposable() }
+        Surface(elevation = 10.dp, shape = RoundedCornerShape(20.dp)) { dataViewerComposable(UserDataViewModel(thisContext)) }
         Spacer(modifier = Modifier.padding(25.dp))
 
         Surface(elevation = 10.dp, shape = RoundedCornerShape(50.dp)) {
@@ -278,12 +263,12 @@ fun homeComposable() {
 
 @Composable
 fun userIdComposable() {
-    val userId = "undefined"
+    val uidPref = LocalContext.current.getSharedPreferences(stringResource(R.string.USERID_DATA), Context.MODE_PRIVATE)
     var showId by remember { mutableStateOf(false) }
 
     if (!showId){
         ClickableText(
-            text = AnnotatedString("引き継ぎコード: ここをタップして表示"),
+            text = AnnotatedString("引き継ぎコードはここをタップして表示"),
             style = TextStyle( fontSize = 13.sp , color = MaterialTheme.typography.body1.color ),
             modifier = Modifier.size(width = 300.dp, height = 18.dp),
             onClick = { showId = true }
@@ -291,23 +276,105 @@ fun userIdComposable() {
     }
     else {
         Text(
-            text = "引き継ぎコード: $userId",
+            text = uidPref.getString("UserId", "undefined").toString(),
             fontSize = 13.sp,
             modifier = Modifier.size(width = 300.dp, height = 18.dp),
-            color = MaterialTheme.typography.body1.color
+            textAlign = TextAlign.Left
         )
     }
 }
 
 @Composable
-fun dataViewerComposable() {
+fun dataViewerComposable(vm: UserDataViewModel) {
+    //Get user's cumulative score and recent emoticons(n = 30)
+    val uidPref = LocalContext.current.getSharedPreferences(stringResource(R.string.USERID_DATA), Context.MODE_PRIVATE)
+    var readyScore by remember { mutableStateOf(false) }
+
+    vm.getCumulativeScore(
+        userId = uidPref.getString("UserId", "undefined").toString(),
+        onSuccess = {
+            readyScore = true
+        }
+    )
+
     Column(
         modifier = Modifier
             //.border(width = 2.dp, color = Color.DarkGray, shape = RoundedCornerShape(20.dp))
             .size(width = 300.dp, height = 450.dp)
+            .padding(25.dp)
     ) {
-        Text(text = "あああああ", fontSize = 50.sp, modifier = Modifier.padding(5.dp))
-        Spacer(modifier = Modifier.padding(75.dp))
-        Text(text = "あああああ", fontSize = 50.sp, modifier = Modifier.padding(5.dp))
+        Text("累計スコア:", fontSize = 30.sp, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.padding(5.dp))
+        Row (modifier = Modifier.width(300.dp), horizontalArrangement = Arrangement.End){
+            if (DEMOMODE){
+                Text("135 pts", fontSize = 40.sp)
+            }
+            else {
+                if (!readyScore) Text("Loading...", fontSize = 40.sp)
+                else Text("${vm.currentScore} pts", fontSize = 40.sp)
+            }
+        }
+
+        Spacer(Modifier.padding(5.dp))
+        Divider()
+        Spacer(Modifier.padding(5.dp))
+
+        Text("もらった絵文字", fontSize = 30.sp, fontWeight = FontWeight.Bold)
+        Text("直近16件を表示しています", fontSize = 12.sp)
+
+        EmojiComposable(UserDataViewModel(LocalContext.current), uidPref.getString("UserId", "undefined").toString())
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun EmojiComposable(vm: UserDataViewModel, userId: String) {
+    var readyEmoji by remember { mutableStateOf(false) }
+
+    vm.getReceivedEmojies(userId, { readyEmoji = true })
+
+    if (DEMOMODE){
+        Column(Modifier.size(width = 300.dp, height = 220.dp)) {
+            Row(Modifier.width(300.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                Image(painterResource(R.drawable.emoji_100), contentDescription = "", modifier = Modifier.size(50.dp))
+                Image(painterResource(R.drawable.emoji_heart), contentDescription = "", modifier = Modifier.size(50.dp))
+                Image(painterResource(R.drawable.emoji_heartsmile), contentDescription = "", modifier = Modifier.size(50.dp))
+                Image(painterResource(R.drawable.emoji_party), contentDescription = "", modifier = Modifier.size(50.dp))
+            }
+            Spacer(Modifier.padding(5.dp))
+            Row(Modifier.width(300.dp)){
+                Image(painterResource(id = R.drawable.emoji_heart), contentDescription = "", modifier = Modifier.size(50.dp))
+
+            }
+        }
+    }
+    else {
+        Column(Modifier.size(width=300.dp, height=220.dp)){
+            /* TODO */
+            if (vm.errorMessage.isEmpty() && readyEmoji) {
+                LazyVerticalGrid(
+                    cells = GridCells.Fixed(4),
+                    modifier = Modifier.size(width = 300.dp, height = 220.dp),
+                    content = {
+                        items(vm.emojies) { emojiId ->
+                            Image(
+                                painterResource(
+                                    ConvEmojiIdToRid.getOrDefault(
+                                        emojiId,
+                                        R.drawable.blank,
+                                    ),
+                                ),
+                                contentDescription = null,
+                                modifier = Modifier.size(50.dp),
+                            )
+                        }
+                    },
+                    verticalArrangement = Arrangement.SpaceAround
+                )
+            }
+            else {
+                Text(vm.errorMessage, overflow = TextOverflow.Ellipsis)
+            }
+        }
     }
 }

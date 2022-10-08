@@ -16,6 +16,8 @@ import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.googlefonts.GoogleFont
 import com.example.funhacks2022.ui.theme.FunHacks2022Theme
 
+val DEMOMODE = false
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,8 +33,6 @@ class MainActivity : ComponentActivity() {
 
                     val sharedPref = LocalContext.current.getSharedPreferences(stringResource(R.string.DRIVING_STATE), Context.MODE_PRIVATE)
                     var drivingState = -1
-
-
 
                     if (sharedPref == null) {
                         Log.d("Information", "Null")
