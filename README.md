@@ -29,3 +29,4 @@ Fork this repo and build on your Android Studio since I did not build any APK fi
 - android.gms
 - com.google.zxing
 - journeyapps.barcodescanner
+- retrofit
