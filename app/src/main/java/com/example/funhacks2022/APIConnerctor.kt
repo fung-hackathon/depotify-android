@@ -25,13 +25,15 @@ class UserDataViewModel(originContext: Context): ViewModel() {
     val udPref = originContext.getSharedPreferences(originContext.getString(R.string.USERID_DATA), Context.MODE_PRIVATE)
 
     var currentScore by mutableStateOf(udPref.getString("UserScore", "0").toString().toInt())
+    var scoreReady by mutableStateOf(false)
+    var emojiReady by mutableStateOf(false)
     var errorMessage: String by mutableStateOf("")
 
     private val _emojies = mutableStateListOf<String>()
     val emojies: List<String>
         get() = _emojies
 
-    fun getCumulativeScore(userId: String, onSuccess: ()->Unit) {
+    fun getCumulativeScore(userId: String){//, onSuccess: ()->Unit) {
         viewModelScope.launch {
             val apiService = DepotifyAPI.Instance()
             try {
@@ -47,8 +49,8 @@ class UserDataViewModel(originContext: Context): ViewModel() {
                     }
                 }
 
+                scoreReady = true
                 Log.d("API SUCCESS", "currentScore updated")
-                onSuccess()
             } catch (e: Exception) {
                 errorMessage = e.message.toString()
                 Log.d("APIERROR", errorMessage)
@@ -56,7 +58,7 @@ class UserDataViewModel(originContext: Context): ViewModel() {
         }
     }
 
-    fun getReceivedEmojies(userId: String, onSuccess: ()->Unit) {
+    fun getReceivedEmojies(userId: String) {//, onSuccess: ()->Unit) {
         viewModelScope.launch {
             val apiService = DepotifyAPI.Instance()
             try {
@@ -68,7 +70,8 @@ class UserDataViewModel(originContext: Context): ViewModel() {
                     _emojies.removeRange(16, _emojies.size)
                 }
 
-                onSuccess()
+                emojiReady = true
+                Log.d("API SUCCESS", "EmojiData updated")
             } catch (e: Exception) {
                 errorMessage = e.toString()
             }
@@ -107,6 +110,7 @@ class UserIdViewModel(originContext: Context): ViewModel() {
             try {
                 val id = apiService.checkUserExist(requestId).userid
 
+                Log.d("Login", "Returned From the API: $id")
                 if (id.equals(requestId)) {
                     currentId = requestId
                     with(uidPref.edit()){

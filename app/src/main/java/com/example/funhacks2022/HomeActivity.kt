@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -21,6 +22,7 @@ import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
@@ -39,6 +41,8 @@ import androidx.core.content.ContextCompat
 import com.example.funhacks2022.ui.theme.DarkSecondaryColor
 import com.example.funhacks2022.ui.theme.FunHacks2022Theme
 import com.example.funhacks2022.ui.theme.LightSecondaryColor
+import com.example.funhacks2022.ui.theme.midGray
+import com.google.android.gms.common.SignInButton.ButtonSize
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.tasks.CancellationTokenSource
@@ -68,7 +72,7 @@ fun homeRootComposable(useridViewModel: UserIdViewModel){
     if (isFirstLanding) {
         firstLandingComposable(
             newUserClick = {
-                useridViewModel.createUser(){
+                useridViewModel.createUser{
                     isFirstLanding = false
                     with(aStatePref.edit()){
                         putBoolean("isFirstLanding", false)
@@ -174,13 +178,26 @@ fun homeComposable() {
 
     val dStatePref = thisContext.getSharedPreferences(stringResource(R.string.DRIVING_STATE), Context.MODE_PRIVATE)
     val locationDataPref = thisContext.getSharedPreferences(stringResource(R.string.LOCATION_DATA), Context.MODE_PRIVATE)
+    val uidPref = thisContext.getSharedPreferences(stringResource(R.string.USERID_DATA), Context.MODE_PRIVATE)
 
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ){
-        userIdComposable()
+        //userIdComposable()
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(50.dp, 0.dp, 50.dp, 0.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Bottom
+        ) {
+            navInfoPageComposable()
+            reloadInfoComposable(UserDataViewModel(LocalContext.current), uidPref.getString("UserId", "undefined").toString())
+        }
+
 
         Spacer(modifier = Modifier.padding(5.dp))
         Surface(elevation = 10.dp, shape = RoundedCornerShape(20.dp)) { dataViewerComposable(UserDataViewModel(thisContext)) }
@@ -262,40 +279,41 @@ fun homeComposable() {
 }
 
 @Composable
-fun userIdComposable() {
-    val uidPref = LocalContext.current.getSharedPreferences(stringResource(R.string.USERID_DATA), Context.MODE_PRIVATE)
-    var showId by remember { mutableStateOf(false) }
+fun navInfoPageComposable(){
+    val thisContext = LocalContext.current
 
-    if (!showId){
-        ClickableText(
-            text = AnnotatedString("引き継ぎコードはここをタップして表示"),
-            style = TextStyle( fontSize = 13.sp , color = MaterialTheme.typography.body1.color ),
-            modifier = Modifier.size(width = 300.dp, height = 18.dp),
-            onClick = { showId = true }
-        )
-    }
-    else {
-        Text(
-            text = uidPref.getString("UserId", "undefined").toString(),
-            fontSize = 13.sp,
-            modifier = Modifier.size(width = 300.dp, height = 18.dp),
-            textAlign = TextAlign.Left
-        )
-    }
+    ClickableText(text = AnnotatedString("その他の情報はこちらをタップ"),
+        style = TextStyle(fontSize = 13.sp, color = MaterialTheme.typography.body1.color),
+        modifier = Modifier.height(23.dp),
+        onClick = { thisContext.startActivity(Intent(thisContext, InfoActivity::class.java)) }
+    )
+}
+
+@Composable
+fun reloadInfoComposable(vm: UserDataViewModel, userId: String){
+    vm.emojiReady = false
+    vm.scoreReady = false
+
+    Image(painterResource(
+        if (isSystemInDarkTheme()) R.drawable.reload_dark else R.drawable.reload_light),
+        contentDescription = "",
+        modifier = Modifier
+            .size(30.dp, 30.dp)
+            .clickable {
+                vm.getCumulativeScore(userId)
+                vm.getReceivedEmojies(userId)
+            }
+    )
 }
 
 @Composable
 fun dataViewerComposable(vm: UserDataViewModel) {
     //Get user's cumulative score and recent emoticons(n = 30)
     val uidPref = LocalContext.current.getSharedPreferences(stringResource(R.string.USERID_DATA), Context.MODE_PRIVATE)
-    var readyScore by remember { mutableStateOf(false) }
 
-    vm.getCumulativeScore(
-        userId = uidPref.getString("UserId", "undefined").toString(),
-        onSuccess = {
-            readyScore = true
-        }
-    )
+    if (!vm.scoreReady) {
+        vm.getCumulativeScore(uidPref.getString("UserId", "undefined").toString())
+    }
 
     Column(
         modifier = Modifier
@@ -310,7 +328,7 @@ fun dataViewerComposable(vm: UserDataViewModel) {
                 Text("135 pts", fontSize = 40.sp)
             }
             else {
-                if (!readyScore) Text("Loading...", fontSize = 40.sp)
+                if (!vm.scoreReady) Text("Loading...", fontSize = 40.sp)
                 else Text("${vm.currentScore} pts", fontSize = 40.sp)
             }
         }
@@ -329,9 +347,19 @@ fun dataViewerComposable(vm: UserDataViewModel) {
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun EmojiComposable(vm: UserDataViewModel, userId: String) {
-    var readyEmoji by remember { mutableStateOf(false) }
+    val flagPref = LocalContext.current.getSharedPreferences(stringResource(R.string.APPFLAG_DATA), Context.MODE_PRIVATE)
+    var updateRequest by remember { mutableStateOf(flagPref.getBoolean("UpdateInfo", true)) }
 
-    vm.getReceivedEmojies(userId, { readyEmoji = true })
+    if (vm.emojiReady == false) {
+        Log.i("UserInfo", "Updating...")
+        vm.getReceivedEmojies(userId)
+
+        with (flagPref.edit()){
+            putBoolean("UpdateInfo", false)
+            apply()
+        }
+        Log.i("UserInfo", "finished...")
+    }
 
     if (DEMOMODE){
         Column(Modifier.size(width = 300.dp, height = 220.dp)) {
@@ -351,7 +379,7 @@ fun EmojiComposable(vm: UserDataViewModel, userId: String) {
     else {
         Column(Modifier.size(width=300.dp, height=220.dp)){
             /* TODO */
-            if (vm.errorMessage.isEmpty() && readyEmoji) {
+            if (vm.errorMessage.isEmpty() && vm.emojiReady) {
                 LazyVerticalGrid(
                     cells = GridCells.Fixed(4),
                     modifier = Modifier.size(width = 300.dp, height = 220.dp),

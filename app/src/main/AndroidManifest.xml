@@ -34,6 +34,17 @@
         </activity>
 
         <activity
+            android:name=".InfoActivity"
+            android:exported="false"
+            android:label="@string/title_activity_home"
+            android:theme="@style/Theme.FunHacks2022"
+            android:windowSoftInputMode="adjustPan">
+            <meta-data
+                android:name="android.app.lib_name"
+                android:value="" />
+        </activity>
+
+        <activity
             android:name=".DrivingActivity"
             android:exported="false"
             android:label="@string/title_activity_driving"
