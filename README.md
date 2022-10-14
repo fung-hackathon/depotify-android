@@ -1,10 +1,10 @@
-# Hackathon for FUN 2022 App
+# depotify-android
 
 This is an Android app that is part of our, fuNG's product, for "Hackathon for FUN"(2022)
 
 - Front-end(Android native app): This repo
-- Front-end(Web app): [funhackathon2022-web](https://github.com/fung-hackathon/funhackathon2022-web)
-- Back-end(Webserver, API): [funhackathon2022-backend](https://github.com/fung-hackathon/funhackathon2022-backend)
+- Front-end(Web app): [depotify-web](https://github.com/fung-hackathon/depotify-web)
+- Back-end(Webserver, API): [depotify-backend](https://github.com/fung-hackathon/depotify-backend)
 
 ## Install
 
