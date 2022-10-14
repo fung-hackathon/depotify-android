@@ -29,3 +29,9 @@ Fork this repo and build on your Android Studio since I did not build any APK fi
 - android.gms
 - com.google.zxing
 - journeyapps.barcodescanner
+
+## Licences
+
+<!-- Begin Yahoo! JAPAN Web Services Attribution Snippet -->
+<span style="margin:15px 15px 15px 15px"><a href="https://developer.yahoo.co.jp/sitemap/">Web Services by Yahoo! JAPAN</a></span>
+<!-- End Yahoo! JAPAN Web Services Attribution Snippet -->
